@@ -1,4 +1,4 @@
-CPP_FLAGS = -ggdb -c -DNDEBUG
+CPP_FLAGS = -ggdb -c 
 COMPLIER = g++-7
 CPP_FILES = $(shell ls *.cpp)
 BASE = $(basename $(CPP_FILES))

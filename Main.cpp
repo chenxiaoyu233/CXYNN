@@ -77,30 +77,41 @@ typedef unsigned char byte;
 
 DenseLayer Input(28, 28); //
 ConvLayer C1(6, 28, 28, 5, 5, 1, 1, 2, 2);
-MaxPoolLayer S2(6, 14, 14, 2, 2, 2, 2, 0, 0);
-ConvLayer C3(16, 10, 10, 5, 5, 1, 1, 0, 0);
-MaxPoolLayer S4(16, 5, 5, 2, 2, 2, 2, 0, 0);
-DenseLayer C5(1, 120);
-DenseLayer F6(1, 84);
+//MaxPoolLayer S2(6, 14, 14, 2, 2, 2, 2, 0, 0);
+//ConvLayer C3(16, 10, 10, 5, 5, 1, 1, 0, 0);
+//MaxPoolLayer S4(16, 5, 5, 2, 2, 2, 2, 0, 0);
+//DenseLayer C5(1, 120);
+//DenseLayer F6(1, 84);
+DenseLayer hide(1, 100);
 DenseLayer Output(1, 10);
 
 Estimator_QuadraticCost estimator(&Output);
 
 void build_network() {
+	//Input.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	//C1.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	//C3.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	//C5.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	//F6.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	//Output.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+
+	//C1.InputLayer(&Input);
+	//S2.InputLayer(&C1);
+	//C3.InputLayer(&S2);
+	//S4.InputLayer(&C3);
+	//C5.InputLayer(&S4);
+	//F6.InputLayer(&C5);
+	//Output.InputLayer(&F6);
+	//
+	
 	Input.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	C1.SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
-	C3.SetActionFunc(&(ActiveFunction::Sigmoid), &(ActiveFunction::SigmoidDel));
-	C5.SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
-	F6.SetActionFunc(&(ActiveFunction::Sigmoid), &(ActiveFunction::SigmoidDel));
+ 	C1.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	hide.SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
 	Output.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
 
 	C1.InputLayer(&Input);
-	S2.InputLayer(&C1);
-	C3.InputLayer(&S2);
-	S4.InputLayer(&C3);
-	C5.InputLayer(&S4);
-	F6.InputLayer(&C5);
-	Output.InputLayer(&F6);
+	hide.InputLayer(&C1);
+	Output.InputLayer(&hide);
 }
 
 vector<Matrix<double>*> trainData;
@@ -185,26 +196,26 @@ void read_test_label() {
 
 void train() {
 	puts("initialize functionAbstractor");
-	FuncAbstractor funcAbstractor(&Input, &Output, &estimator);
+	FuncAbstractor funcAbstractor(&Input, &Output, &estimator, 0.1);
 	puts("complete");
 
 
 	puts("initialize optimizer");
 	Optimizer optimizer(
 		&funcAbstractor,
-		0.6f,
+		0.05f,
 		2000,
 		trainData,
 		trainLabel,
 		"mnist/train_backup",
 		2333,
-		-0.02, 0.02, 0.0001,
-		50
+		-0.10, 0.10, 0.0001,
+		200
 	);
 	puts("complete");
 
 	optimizer.SetSaveStep(5);
-	optimizer.TrainFromNothing();
+	optimizer.TrainFromFile();
 	
 	optimizer.Save(); //最后保存一下
 
@@ -212,20 +223,20 @@ void train() {
 
 void test() {
 	puts("initialize functionAbstractor");
-	FuncAbstractor funcAbstractor(&Input, &Output, &estimator);
+	FuncAbstractor funcAbstractor(&Input, &Output, &estimator, 0.1);
 	puts("complete");
 
 	puts("initialize predictor");
 	Predictor predictor(
 		&funcAbstractor,
-		0.6f,
+		0.05f,
 		2000,
 		trainData,
 		trainLabel,
 		"mnist/train_backup",
 		2333,
-		-0.02, 0.02, 0.0001,
-		50
+		-0.10, 0.10, 0.0001,
+		200
 	);
 
 	Matrix<double> *mat;
