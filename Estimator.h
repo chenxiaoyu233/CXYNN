@@ -28,4 +28,14 @@ class Estimator_QuadraticCost: public Estimator {
 	virtual double LossDel(Matrix<double> *expect);
 };
 
+// softmax 损失函数
+class Estimator_Softmax: public Estimator {
+	public: 
+	Estimator_Softmax(Layer *Input);
+
+	// expect 为1 x 1的矩阵, 表示预期出现的编号
+	virtual double Loss(Matrix<double> *expect);
+	virtual double LossDel(Matrix<double> *expect);
+};
+
 #endif

@@ -85,7 +85,7 @@ ConvLayer C1(6, 28, 28, 5, 5, 1, 1, 2, 2);
 DenseLayer hide(1, 100);
 DenseLayer Output(1, 10);
 
-Estimator_QuadraticCost estimator(&Output);
+Estimator_Softmax estimator(&Output);
 
 void build_network() {
 	//Input.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
@@ -168,10 +168,12 @@ void read_label(vector<Matrix<double>*> &label, string filename) {
 	readInt(&magic, in);
 	readInt(&num, in);
 	FOR(i, 1, num) {
-		mat = new Matrix<double>(1, 10);
+		//mat = new Matrix<double>(1, 10);
 		fread(&buffer, sizeof(byte), 1, in);
-		FOR(i, 1, 10) (*mat)(1, i) = 0.01f;
-		(*mat)(1, buffer+1) = 0.99f; //下标1 -> 10, 对应数字1 -> 9
+		//FOR(i, 1, 10) (*mat)(1, i) = 0.01f;
+		//(*mat)(1, buffer+1) = 0.99f; //下标1 -> 10, 对应数字1 -> 9
+		mat = new Matrix<double>(1, 1);
+		(*mat)(1) = buffer + 1;
 		label.push_back(mat);
 	}
 	fclose(in);
@@ -215,7 +217,8 @@ void train() {
 	puts("complete");
 
 	optimizer.SetSaveStep(5);
-	optimizer.TrainFromFile();
+	//optimizer.TrainFromFile();
+	optimizer.TrainFromNothing();
 	
 	optimizer.Save(); //最后保存一下
 
@@ -241,19 +244,19 @@ void test() {
 
 	Matrix<double> *mat;
 	FOR(i, 0, 9) {
-		mat = new Matrix<double>(1, 10);
-		FOR(j, 1, 10) (*mat)(1, j) = 0.01f;
-		(*mat)(1, i+1) = 0.99f;
+		mat = new Matrix<double>(1, 1);
+		(*mat)(1) = i+1;
 		predictor.AddCase(i, mat); // 这里的内存泄漏了, 但是现在并不想管
 	}
 	puts("complete");
 
 	int correct = 0;
 	for (int i = 0; i < testData.size(); i++) {
-		int ans = 0;
-		FOR(j, 1, 10) if ((*(testLabel[i]))(1, j) > 0.5) ans = j;
+		int ans = (*(testLabel[i]))(1);
+		//FOR(j, 1, 10) if ((*(testLabel[i]))(1, j) > 0.5) ans = j;
 		//printf("%d : %d\n", ans-1, predictor.Classify(testData[i]));
 		if (ans-1 == predictor.Classify(testData[i])) correct += 1;
+		printf("%d/%d %d/%d\n", correct, i+1, i+1, testData.size());
 	}
 	printf("%d/%d\n", correct, testData.size());
 
@@ -266,8 +269,8 @@ int main() {
 	read_test_data();
 	read_test_label();
 
-	train();
-	//test();
+	//train();
+	test();
 	return 0;
 }
 
