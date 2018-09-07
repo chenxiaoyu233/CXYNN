@@ -6,6 +6,15 @@
 // cuda 运行时函数
 #ifdef ENABLE_CUDA
 #include <cuda_runtime.h>
+// cuda API error message
+#define CHECK(x) \
+do {\
+	cudaError_t err = (x);\
+	if (err != cudaSuccess) {\
+		 fprintf(stderr, "API error %s:%d Returned:%s\n", __FILE__, __LINE__, cudaGetErrorString(err));\
+		 exit(1);\
+	}\
+} while(0)
 #endif
 
 

@@ -45,18 +45,18 @@ Neuron::Neuron(
 
 #ifdef ENABLE_CUDA
 Neuron::~Neuron() {
-	if(gpu_input != NULL) { cudaFree(gpu_input); }
-	if(gpu_output != NULL) { cudaFree(gpu_output); }
+	if(gpu_input != NULL) { CHECK( cudaFree(gpu_input) ); }
+	if(gpu_output != NULL) { CHECK( cudaFree(gpu_output) ); }
 	if(cpu_input != NULL) { delete[] cpu_input; }
 	if(cpu_output != NULL) { delete[] cpu_output; }
-	if(gpu_input_count != NULL) { cudaFree(gpu_input_count); }
-	if(gpu_output_count != NULL) { cudaFree(gpu_output_count); }
+	if(gpu_input_count != NULL) { CHECK( cudaFree(gpu_input_count) ); }
+	if(gpu_output_count != NULL) { CHECK( cudaFree(gpu_output_count) ); }
 	if(cpu_input_count != NULL) { delete cpu_input_count; }
 	if(cpu_output_count != NULL) { delete cpu_output_count; }
 	if(cpu_input_idx != NULL) { delete[] cpu_input_idx; }
 	if(cpu_output_idx != NULL) { delete[] cpu_output_idx; }
-	if(gpu_input_idx != NULL) { cudaFree(gpu_input_idx); }
-	if(gpu_output_idx != NULL) { cudaFree(gpu_output_idx); }
+	if(gpu_input_idx != NULL) { CHECK( cudaFree(gpu_input_idx) ); }
+	if(gpu_output_idx != NULL) { CHECK( cudaFree(gpu_output_idx) ); }
 }
 #endif
 
@@ -163,12 +163,12 @@ void Neuron::syncFiberInfo(
 		cpu_idx[i] = fiber[i].neuron -> idx;
 	}
 
-	cudaMalloc(&gpu_count, sizeof(int));
-	cudaMalloc(&gpu_fiber, sizeof(Fiber) * cnt);
-	cudaMalloc(&gpu_idx, sizeof(int) * cnt);
+	CHECK( cudaMalloc(&gpu_count, sizeof(int)) );
+	CHECK( cudaMalloc(&gpu_fiber, sizeof(Fiber) * cnt) );
+	CHECK( cudaMalloc(&gpu_idx, sizeof(int) * cnt) );
 
-	cudaMemcpy(cpu_count, gpu_count, sizeof(int), cudaMemcpyHostToDevice);
-	cudaMemcpy(fiber, gpu_fiber, sizeof(Fiber) * cnt, cudaMemcpyHostToDevice);
-	cudaMemcpy(cpu_idx, gpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice);
+	CHECK( cudaMemcpy(gpu_count, cpu_count, sizeof(int), cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(gpu_fiber, fiber, sizeof(Fiber) * cnt, cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(gpu_idx, cpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice) );
 }
 #endif

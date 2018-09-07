@@ -26,9 +26,9 @@ aux_source_directory (. source_list)
 
 # 添加优化/调试编译指令
 if (NDEBUG)
-	add_compile_options ( -O2 )
+	set(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
 else (NDEBUG)
-	add_compile_options ( -ggdb )
+	set(CMAKE_CXX_FLAGS "-ggdb ${CMAKE_CXX_FLAGS}")
 endif (NDEBUG)
 
 # 编译目标
@@ -41,6 +41,8 @@ if (ENABLE_CUDA)
 	)
 	add_subdirectory (cuda)
 	target_link_libraries (CXYNeuronNetwork cuda_kernel)
+	set (CUDA_FLAGS "-g ${CUDA_FLAGS}")
+	set (CUDA_FLAGS "-G ${CUDA_FLAGS}")
 endif (ENABLE_CUDA)
 
 # 安装选项

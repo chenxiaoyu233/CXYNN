@@ -64,7 +64,7 @@ void Optimizer::LoadFromFile() {
 	assert(sz == func -> param_cnt);
 	func -> syncParamFromDeviceToHost();
 	for (int i = 0; i < func -> param_cnt; i++) {
-		fscanf(in, "%lf", (func -> cpu_param)[i]);
+		fscanf(in, "%lf", func -> cpu_param + i);
 	}
 	func -> syncParamFromHostToDevice();
 #else

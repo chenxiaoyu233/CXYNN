@@ -20,13 +20,14 @@ FuncAbstractor::FuncAbstractor(
 	paramDel.clear();
 	Output -> CollectParam(&(this -> param), &(this -> paramDel));
 #ifdef ENABLE_CUDA
+	Output -> RebuildOnGPU();
 	param_cnt = param.size();
 	cpu_param = new double[param_cnt];
 	cpu_paramDel = new double[param_cnt];
-	cudaMalloc(&gpu_param_ptr, sizeof(double**) * param_cnt);
-	cudaMalloc(&gpu_paramDel_ptr, sizeof(double**) * param_cnt);
-	cudaMalloc(&gpu_param, sizeof(double) * param_cnt);
-	cudaMalloc(&gpu_paramDel, sizeof(double) * param_cnt);
+	CHECK( cudaMalloc(&gpu_param_ptr, sizeof(double**) * param_cnt) );
+	CHECK( cudaMalloc(&gpu_paramDel_ptr, sizeof(double**) * param_cnt) );
+	CHECK( cudaMalloc(&gpu_param, sizeof(double) * param_cnt) );
+	CHECK( cudaMalloc(&gpu_paramDel, sizeof(double) * param_cnt) );
 
 	cpu_param_ptr = new double* [param_cnt];
 	cpu_paramDel_ptr = new double* [param_cnt];
@@ -34,8 +35,8 @@ FuncAbstractor::FuncAbstractor(
 		cpu_param_ptr[i] = param[i];
 		cpu_paramDel_ptr[i] = paramDel[i];
 	}
-	cudaMemcpy(gpu_param_ptr, cpu_param_ptr, sizeof(double*) * param_cnt, cudaMemcpyHostToDevice);
-	cudaMemcpy(gpu_paramDel_ptr, cpu_paramDel_ptr, sizeof(double*) * param_cnt, cudaMemcpyHostToDevice);
+	CHECK( cudaMemcpy(gpu_param_ptr, cpu_param_ptr, sizeof(double*) * param_cnt, cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(gpu_paramDel_ptr, cpu_paramDel_ptr, sizeof(double*) * param_cnt, cudaMemcpyHostToDevice) );
 	delete[] cpu_param_ptr;
 	delete[] cpu_paramDel_ptr;
 #endif
@@ -46,15 +47,15 @@ FuncAbstractor::FuncAbstractor(
 FuncAbstractor::~FuncAbstractor() {
 	delete[] cpu_param;
 	delete[] cpu_paramDel;
-	cudaFree(gpu_param_ptr);
-	cudaFree(gpu_paramDel_ptr);
-	cudaFree(gpu_param);
-	cudaFree(gpu_paramDel);
+	CHECK( cudaFree(gpu_param_ptr) );
+	CHECK( cudaFree(gpu_paramDel_ptr) );
+	CHECK( cudaFree(gpu_param) );
+	CHECK( cudaFree(gpu_paramDel) );
 }
 
 void FuncAbstractor::syncParamFromHostToDevice() {
-	cudaMemcpy(gpu_param, cpu_param, sizeof(double) * param_cnt, cudaMemcpyHostToDevice);
-	cudaMemcpy(gpu_paramDel, cpu_paramDel, sizeof(double) * param_cnt, cudaMemcpyHostToDevice);
+	CHECK( cudaMemcpy(gpu_param, cpu_param, sizeof(double) * param_cnt, cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(gpu_paramDel, cpu_paramDel, sizeof(double) * param_cnt, cudaMemcpyHostToDevice) );
 	kernel_sync_param_from_host_to_device(gpu_param_ptr, gpu_param, param_cnt);
 	kernel_sync_param_from_host_to_device(gpu_paramDel_ptr, gpu_paramDel, param_cnt);
 }
@@ -62,8 +63,8 @@ void FuncAbstractor::syncParamFromHostToDevice() {
 void FuncAbstractor::syncParamFromDeviceToHost() {
 	kernel_sync_param_from_device_to_host(gpu_param_ptr, gpu_param, param_cnt);
 	kernel_sync_param_from_device_to_host(gpu_paramDel_ptr, gpu_paramDel, param_cnt);
-	cudaMemcpy(cpu_param, gpu_param, sizeof(double) * param_cnt, cudaMemcpyDeviceToHost);
-	cudaMemcpy(cpu_paramDel, gpu_paramDel, sizeof(double) * param_cnt, cudaMemcpyDeviceToHost);
+	CHECK( cudaMemcpy(cpu_param, gpu_param, sizeof(double) * param_cnt, cudaMemcpyDeviceToHost) );
+	CHECK( cudaMemcpy(cpu_paramDel, gpu_paramDel, sizeof(double) * param_cnt, cudaMemcpyDeviceToHost) );
 }
 #endif
 

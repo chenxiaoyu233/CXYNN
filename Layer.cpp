@@ -14,8 +14,8 @@ void Layer::layerInit() {
 	FOR(cur, 1, channel){ SetAt(cur); //换面
 		FOR(i, 1, row) FOR(j, 1, col) {
 #ifdef ENABLE_CUDA
-			cudaMalloc(&(*this)(i, j).b, sizeof(double));
-			cudaMalloc(&(*this)(i, j).bDel, sizeof(double));
+			CHECK( cudaMalloc(&(*this)(i, j).b, sizeof(double)) );
+			CHECK( cudaMalloc(&(*this)(i, j).bDel, sizeof(double)) );
 #else
 			(*this)(i, j).b = new double;
 			(*this)(i, j).bDel = new double;
@@ -39,14 +39,14 @@ Layer::Layer(int channel, int row, int col)
 Layer::~Layer() {
 	for(int i = 0; i < paramPool.size(); i++) {
 #ifdef ENABLE_CUDA
-		cudaFree(paramPool[i]);
+		CHECK( cudaFree(paramPool[i]) );
 #else
 		delete paramPool[i];
 #endif
 	}
 	for(int i = 0; i < paramDeltaPool.size(); i++) {
 #ifdef ENABLE_CUDA
-		cudaFree(paramDeltaPool[i]);
+		CHECK( cudaFree(paramDeltaPool[i]) );
 #else
 		delete paramDeltaPool[i];
 #endif
@@ -56,8 +56,8 @@ Layer::~Layer() {
 void Layer::Insert(Neuron *a, Neuron *b) { // a -> b
 	double *Wab, *dWab;
 #ifdef ENABLE_CUDA
-	cudaMalloc(&Wab, sizeof(double));
-	cudaMalloc(&dWab, sizeof(double));
+	CHECK( cudaMalloc(&Wab, sizeof(double)) );
+	CHECK( cudaMalloc(&dWab, sizeof(double)) );
 #else
 	Wab = new double; dWab = new double;
 #endif
@@ -108,10 +108,10 @@ void Layer::UpdateForwardBegin(Matrix<double> *other) {
 	assert(channel == other->Channel());
 #ifdef ENABLE_CUDA
 	double *gpu_buffer;
-	cudaMalloc(&gpu_buffer, sizeof(double) * channel * row * col);
-	cudaMemcpy(gpu_buffer, other -> field, sizeof(double) * channel * row * col, cudaMemcpyHostToDevice);
+	CHECK( cudaMalloc(&gpu_buffer, sizeof(double) * channel * row * col) );
+	CHECK( cudaMemcpy(gpu_buffer, other -> field, sizeof(double) * channel * row * col, cudaMemcpyHostToDevice) );
 	kernel_layer_set_value(gpu_field, gpu_buffer, channel * row * col);
-	cudaFree(gpu_buffer);
+	CHECK( cudaFree(gpu_buffer) );
 #else
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {

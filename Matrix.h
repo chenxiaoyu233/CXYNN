@@ -5,7 +5,8 @@
 
 // 数组定位(从 0 开始编号)
 #ifdef ENABLE_CUDA
-#define LOCATE(f, a, b, c) f[ a * row * col + b * col + c ]
+#define LOCATE(f, a, b, c) f[ (a) * row * col + (b) * col + (c) ]
+#define AT(a, b, c) (a) * row * col + (b) * col + (c)
 #endif
 
 //矩阵的下标从1开始
@@ -88,17 +89,17 @@ void Matrix<ValueType>::mallocMemory() {
 #ifdef ENABLE_CUDA
 template <class ValueType>
 void Matrix<ValueType>::mallocGpuMemory() {
-	cudaMalloc(&gpu_field, sizeof(ValueType) * channel * row * col); 
+	CHECK( cudaMalloc(&gpu_field, sizeof(ValueType) * channel * row * col) ); 
 }
 
 template <class ValueType>
 void Matrix<ValueType>::syncMemFromHostToDevice() {
-	cudaMemcpy(gpu_field, field, sizeof(ValueType) * channel * row * col, cudaMemcpyHostToDevice);
+	CHECK( cudaMemcpy(gpu_field, field, sizeof(ValueType) * channel * row * col, cudaMemcpyHostToDevice) );
 }
 
 template <class ValueType>
 void Matrix<ValueType>::syncMemFromDeviceToHost() {
-	cudaMemcpy(field, gpu_field, sizeof(ValueType) * channel * row * col, cudaMemcpyDeviceToHost);
+	CHECK( cudaMemcpy(field, gpu_field, sizeof(ValueType) * channel * row * col, cudaMemcpyDeviceToHost) );
 }
 #endif
 
@@ -136,6 +137,7 @@ ValueType& Matrix<ValueType>::operator () (int c, int a, int b) {
 	assert(1 <= a); assert(a <= row);
 	assert(1 <= b); assert(b <= col);
 #ifdef ENABLE_CUDA
+	assert(AT(c-1, a-1, b-1) <= channel * row * col);
 	return LOCATE(field, c-1, a-1, b-1);
 #else
 	return field[c-1][a-1][b-1];
@@ -146,7 +148,9 @@ template <class ValueType>
 ValueType& Matrix<ValueType>::operator () (int a, int b) {
 	assert(a <= row); assert(b <= col);
 	assert(1 <= a); assert(1 <= b);
+	//printf("cur: %d, tot: %d, a: %d, b: %d\n", AT(at, a-1, b-1), channel * row * col, a, b);
 #ifdef ENABLE_CUDA
+	assert(AT(at, a-1, b-1) <= channel * row * col);
 	return LOCATE(field, at, a-1, b-1);
 #else
 	return field[at][a-1][b-1];
@@ -158,8 +162,14 @@ ValueType& Matrix<ValueType>::operator () (int a) {
 	assert(row == 1 || col == 1);
 	assert(1 <= a); assert(a <= max(row, col)); // @可能存在问题, 没仔细想
 #ifdef ENABLE_CUDA
-	if (row == 1) return LOCATE(field, at, 0, a-1); 
-	if (col == 1) return LOCATE(field, at, a-1, 0);
+	if (row == 1) {
+		assert(AT(at, 0, a-1) <= channel * row * col);
+		return LOCATE(field, at, 0, a-1); 
+	}
+	if (col == 1) {
+		assert(AT(at, a-1, 0) <= channel * row * col);
+		return LOCATE(field, at, a-1, 0);
+	}
 #else
 	if (row == 1) return field[at][0][a-1]; 
 	if (col == 1) return field[at][a-1][0];

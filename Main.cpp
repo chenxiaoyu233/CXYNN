@@ -75,6 +75,7 @@ int main() {
 #include "CXYNeuronNetwork.h"
 typedef unsigned char byte;
 
+/*
 DenseLayer Input(28, 28); //
 ConvLayer C1(6, 28, 28, 5, 5, 1, 1, 2, 2);
 //MaxPoolLayer S2(6, 14, 14, 2, 2, 2, 2, 0, 0);
@@ -267,19 +268,43 @@ void test() {
 	printf("%d/%d\n", correct, testData.size());
 
 }
+*/
+
+class Data {
+	public:
+	double *b;
+	double *bDel;
+};
+
+class List: public Matrix<Data> {
+	public:
+	List(): Matrix(28, 28) { 
+		malloc_param();
+	}
+	void malloc_param() {
+		for(int i = 1; i <= 28; i++)
+		for(int j = 1; j <= 28; j++) {
+			cudaMalloc(&(*this)(i, j).b, sizeof(double));
+		}
+	}
+};
+
 
 int main() {
 #ifdef ENABLE_CUDA
+	List test;
 	cuda_init();
 #endif
+	/*
 	build_network();
 	read_train_data();
 	read_train_label();
 	read_test_data();
 	read_test_label();
 
-	//train();
-	test();
+	train();
+	*/
+	//test();
 	return 0;
 }
 

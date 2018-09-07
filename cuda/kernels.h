@@ -23,20 +23,22 @@ void kernel_layer_set_value(Neuron *gpu_field, double *buffer, int len);
 void kernel_maxpool_push_spread_back(Neuron *gpu_field, int len);
 void kernel_maxpool_update_forward(Neuron *gpu_field, int len);
 
-extern double (*kernel_Sigmoid) (double x);
-extern double (*kernel_SigmoidDel) (double x);
+typedef double (*ACTFUNC) (double);
 
-extern double (*kernel_ReLU) (double x);
-extern double (*kernel_ReLUDel) (double x);
+extern ACTFUNC kernel_Sigmoid;
+extern ACTFUNC kernel_SigmoidDel;
 
-extern double (*kernel_tanh) (double x);
-extern double (*kernel_tanhDel) (double x);
+extern ACTFUNC kernel_ReLU;
+extern ACTFUNC kernel_ReLUDel;
 
-extern double (*kernel_BNLL) (double x);
-extern double (*kernel_BNLLDel) (double x);
+extern ACTFUNC kernel_tanh;
+extern ACTFUNC kernel_tanhDel;
 
-extern double (*kernel_Linear) (double x);
-extern double (*kernel_LinearDel) (double x);
+extern ACTFUNC kernel_BNLL;
+extern ACTFUNC kernel_BNLLDel;
+
+extern ACTFUNC kernel_Linear;
+extern ACTFUNC kernel_LinearDel;
 
 void active_function_register();
 

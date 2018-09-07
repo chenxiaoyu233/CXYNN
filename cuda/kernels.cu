@@ -12,7 +12,7 @@ SM的数量：" << devProp.multiProcessorCount << std::endl;
 */
 
 void kernel_init_info() {
-	cudaGetDeviceProperties(&devProp, dev);
+	CHECK( cudaGetDeviceProperties(&devProp, dev) );
 }
 
 int block_size(){
@@ -166,6 +166,7 @@ void kernel_maxpool_update_forward(Neuron *gpu_field, int len) {
 	cudaDeviceSynchronize();
 }
 
+
 __device__ double __Sigmoid__ (double x) {
 	return 1.0f/(1.0f + exp(-x));
 }
@@ -207,35 +208,51 @@ __device__ double __LinearDel__ (double x) {
 	return 1.0f;
 }
 
-double (*kernel_Sigmoid) (double x);
-double (*kernel_SigmoidDel) (double x);
+__device__ ACTFUNC dev_Sigmoid = __Sigmoid__;
+__device__ ACTFUNC dev_SigmoidDel = __SigmoidDel__;
 
-double (*kernel_ReLU) (double x);
-double (*kernel_ReLUDel) (double x);
+__device__ ACTFUNC dev_ReLU = __ReLU__;
+__device__ ACTFUNC dev_ReLUDel = __ReLUDel__;
 
-double (*kernel_tanh) (double x);
-double (*kernel_tanhDel) (double x);
+__device__ ACTFUNC dev_tanh = __tanh__;
+__device__ ACTFUNC dev_tanhDel = __tanhDel__;
 
-double (*kernel_BNLL) (double x);
-double (*kernel_BNLLDel) (double x);
+__device__ ACTFUNC dev_BNLL = __BNLL__;
+__device__ ACTFUNC dev_BNLLDel = __BNLLDel__;
 
-double (*kernel_Linear) (double x);
-double (*kernel_LinearDel) (double x);
+__device__ ACTFUNC dev_Linear = __Linear__;
+__device__ ACTFUNC dev_LinearDel = __LinearDel__;
+
+ACTFUNC kernel_Sigmoid;
+ACTFUNC kernel_SigmoidDel;
+
+ACTFUNC kernel_ReLU;
+ACTFUNC kernel_ReLUDel;
+
+ACTFUNC kernel_tanh;
+ACTFUNC kernel_tanhDel;
+
+ACTFUNC kernel_BNLL;
+ACTFUNC kernel_BNLLDel;
+
+ACTFUNC kernel_Linear;
+ACTFUNC kernel_LinearDel;
 
 void active_function_register() {
-	cudaMemcpyFromSymbol(&kernel_Sigmoid, &__Sigmoid__, sizeof(&__Sigmoid__));
-	cudaMemcpyFromSymbol(&kernel_SigmoidDel, &__SigmoidDel__, sizeof(&__SigmoidDel__));
-	cudaMemcpyFromSymbol(&kernel_ReLU, &__ReLU__, sizeof(&__ReLU__));
-	cudaMemcpyFromSymbol(&kernel_ReLUDel, &__ReLUDel__, sizeof(&__ReLUDel__));
-	cudaMemcpyFromSymbol(&kernel_tanh, &__tanh__, sizeof(&__tanh__));
-	cudaMemcpyFromSymbol(&kernel_tanhDel, &__tanhDel__, sizeof(&__tanhDel__));
-	cudaMemcpyFromSymbol(&kernel_BNLL, &__BNLL__, sizeof(&__BNLL__));
-	cudaMemcpyFromSymbol(&kernel_BNLLDel, &__BNLLDel__, sizeof(&__BNLLDel__));
-	cudaMemcpyFromSymbol(&kernel_Linear, &__Linear__, sizeof(&__Linear__));
-	cudaMemcpyFromSymbol(&kernel_LinearDel, &__LinearDel__, sizeof(&__LinearDel__));
+	CHECK( cudaMemcpyFromSymbol(&kernel_Sigmoid, dev_Sigmoid, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_SigmoidDel, dev_SigmoidDel, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_ReLU, dev_ReLU, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_ReLUDel, dev_ReLUDel, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_tanh, dev_tanh, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_tanhDel, dev_tanhDel, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_BNLL, dev_BNLL, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_BNLLDel, dev_BNLLDel, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_Linear, dev_Linear, sizeof(ACTFUNC)) );
+	CHECK( cudaMemcpyFromSymbol(&kernel_LinearDel, dev_LinearDel, sizeof(ACTFUNC)) );
 }
 
 void cuda_init() {
 	kernel_init_info();
 	active_function_register();
 }
+
