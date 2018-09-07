@@ -1,5 +1,7 @@
 #include "Fiber.h"
 
+Fiber::Fiber() { }
+
 Fiber::Fiber(double* weight, double* weightDel, Neuron* neuron):
 	weight(weight), weightDel(weightDel), neuron(neuron){ }
 

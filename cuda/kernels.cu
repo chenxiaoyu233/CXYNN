@@ -26,7 +26,7 @@ int grid_size(int N){
 __global__ void __rebuild_input_fiber__ (Neuron *input_field, Neuron *gpu_field, int len) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	if(idx >= len) return;
-	for(int i = 0; i < gpu_field[idx].gpu_input_count; ++i) {
+	for(int i = 0; i < *(gpu_field[idx].gpu_input_count); ++i) {
 		gpu_field[idx].gpu_input[i].neuron = input_field + gpu_field[idx].gpu_input_idx[i];
 	}
 }
@@ -39,7 +39,7 @@ void kernel_rebuild_input_fiber(Neuron *input_field, Neuron *gpu_field, int len)
 __global__ void __rebuild_output_fiber__ (Neuron *output_field, Neuron *gpu_field, int len) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	if(idx >= len) return;
-	for(int i = 0; i < gpu_field[idx].gpu_output_count; ++i) {
+	for(int i = 0; i < *(gpu_field[idx].gpu_output_count); ++i) {
 		gpu_field[idx].gpu_output[i].neuron = output_field + gpu_field[idx].gpu_output_idx[i];
 	}
 }
@@ -53,7 +53,7 @@ __global__ void __update_forward__ (Neuron *gpu_field, int len) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	if(idx >= len) return;
 	gpu_field[idx].forwardBuffer[0] = 0;
-	for(int i = 0; i < gpu_field[idx].gpu_input_count; ++i) {
+	for(int i = 0; i < (*gpu_field[idx].gpu_input_count); ++i) {
 		gpu_field[idx].forwardBuffer[0] += 
 			(gpu_field[idx].gpu_input[i].neuron -> forwardBuffer[1]) * (*(gpu_field[idx].gpu_input[i].weight));
 	}
@@ -71,7 +71,7 @@ __global__ void __spread_back__ (Neuron *gpu_field, int len) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	if(idx >= len) return;
 	gpu_field[idx].backwardBuffer = 0;
-	for(int i = 0; i < gpu_field[idx].gpu_output_count; ++i) {
+	for(int i = 0; i < (*gpu_field[idx].gpu_output_count); ++i) {
 		gpu_field[idx].backwardBuffer += 
 			(gpu_field[idx].gpu_output[i].neuron -> backwardBuffer) * 
 			(*(gpu_field[idx].gpu_output[i].weight)) *
@@ -106,7 +106,7 @@ __global__ void __sync_param_from_host_to_device__ (double **param_ptr, double *
 }
 
 void kernel_sync_param_from_host_to_device(double **param_ptr, double *param, int cnt) {
-	__sync_param_from_host_to_device__<<<grid_size(cnt), block_size()>>>(param_ptr, param cnt);
+	__sync_param_from_host_to_device__<<<grid_size(cnt), block_size()>>>(param_ptr, param, cnt);
 	cudaDeviceSynchronize();
 }
 
@@ -134,6 +134,38 @@ void kernel_layer_set_value(Neuron *gpu_field, double *buffer, int len) {
 	cudaDeviceSynchronize();
 }
 
+__global__ void __maxpool_push_spread_back__ (Neuron *gpu_field, int len) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	if(idx >= len) return;
+	for(int i = 0; i < *(gpu_field[idx].gpu_input_count); ++i) {
+		if(gpu_field[idx].gpu_input[i].neuron -> forwardBuffer[1] == gpu_field[idx].forwardBuffer[0]) {
+			gpu_field[idx].gpu_input[i].neuron -> backwardBuffer += gpu_field[idx].backwardBuffer;
+		}
+	}
+}
+
+void kernel_maxpool_push_spread_back(Neuron *gpu_field, int len) {
+	__maxpool_push_spread_back__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	cudaDeviceSynchronize();
+}
+
+__global__ void __maxpool_update_forward__ (Neuron *gpu_field, int len) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	if(idx >= len) return;
+	gpu_field[idx].forwardBuffer[0] = -1e10; // 标兵
+	for(int i = 0; i < *(gpu_field[idx].gpu_input_count); ++i) {
+		gpu_field[idx].forwardBuffer[0] = 
+			max(gpu_field[idx].forwardBuffer[0], gpu_field[idx].gpu_input[i].neuron -> forwardBuffer[1]);
+	}
+	gpu_field[idx].forwardBuffer[1] = gpu_field[idx].forwardBuffer[0];
+	gpu_field[idx].forwardBuffer[2] = 1.0f;
+}
+
+void kernel_maxpool_update_forward(Neuron *gpu_field, int len) {
+	__maxpool_update_forward__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	cudaDeviceSynchronize();
+}
+
 __device__ double __Sigmoid__ (double x) {
 	return 1.0f/(1.0f + exp(-x));
 }
@@ -148,7 +180,7 @@ __device__ double __ReLU__ (double x) {
 
 __device__ double __ReLUDel__ (double x) {
 	if (x <= 0) return 0;
-	if (x > 0) return 1;
+	else return 1;
 }
 
 __device__ double __tanh__ (double x) {
@@ -174,6 +206,21 @@ __device__ double __Linear__ (double x) {
 __device__ double __LinearDel__ (double x) {
 	return 1.0f;
 }
+
+double (*kernel_Sigmoid) (double x);
+double (*kernel_SigmoidDel) (double x);
+
+double (*kernel_ReLU) (double x);
+double (*kernel_ReLUDel) (double x);
+
+double (*kernel_tanh) (double x);
+double (*kernel_tanhDel) (double x);
+
+double (*kernel_BNLL) (double x);
+double (*kernel_BNLLDel) (double x);
+
+double (*kernel_Linear) (double x);
+double (*kernel_LinearDel) (double x);
 
 void active_function_register() {
 	cudaMemcpyFromSymbol(&kernel_Sigmoid, &__Sigmoid__, sizeof(&__Sigmoid__));

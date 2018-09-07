@@ -1,17 +1,13 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-//#define NDEBUG //调试完成之后使用这句话禁用assert
+#include "config.h" // cmake 编译控制 
 
 // cuda 运行时函数
 #ifdef ENABLE_CUDA
 #include <cuda_runtime.h>
 #endif
 
-// cuda kernels
-#ifdef ENABLE_CUDA
-#include "cuda/kernels.h"
-#endif
 
 #include <vector>
 #include <iostream>
@@ -24,6 +20,7 @@
 #include <algorithm>
 
 using namespace std;
+
 
 #define FOR(i, l, r) for(int (i) = (l); (i) <= (r); (i)++)
 #define FORS(i, l, r, s) for(int (i) = (l); (i) <= (r); (i) += (s))

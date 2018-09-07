@@ -1,4 +1,9 @@
 #include "FuncAbstractor.h"
+// cuda kernels
+#ifdef ENABLE_CUDA
+#include "cuda/kernels.h"
+#endif
+
 
 FuncAbstractor::FuncAbstractor(
 	Layer* Input,
@@ -23,8 +28,8 @@ FuncAbstractor::FuncAbstractor(
 	cudaMalloc(&gpu_param, sizeof(double) * param_cnt);
 	cudaMalloc(&gpu_paramDel, sizeof(double) * param_cnt);
 
-	cpu_param_ptr = new (double*)[param_cnt];
-	cpu_paramDel_ptr = new (double*)[param_cnt];
+	cpu_param_ptr = new double* [param_cnt];
+	cpu_paramDel_ptr = new double* [param_cnt];
 	FOR(i, 0, param_cnt-1) {
 		cpu_param_ptr[i] = param[i];
 		cpu_paramDel_ptr[i] = paramDel[i];

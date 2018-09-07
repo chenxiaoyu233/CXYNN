@@ -17,5 +17,10 @@ using namespace std;
 #include "Optimizer.h"
 #include "Predictor.h"
 
+// cuda kernels
+#ifdef ENABLE_CUDA
+#include "cuda/kernels.h"
+#endif
+
 #endif 
 

@@ -1,4 +1,9 @@
 #include "Optimizer.h"
+// cuda kernels
+#ifdef ENABLE_CUDA
+#include "cuda/kernels.h"
+#endif
+
 
 Optimizer::Optimizer(
 	FuncAbstractor* func, 

@@ -1,4 +1,9 @@
 #include "Layer.h"
+// cuda kernels
+#ifdef ENABLE_CUDA
+#include "cuda/kernels.h"
+#endif
+
 
 void Layer::layerInit() {
 	paramPool.clear();

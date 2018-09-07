@@ -70,7 +70,7 @@ class Neuron {
 #ifdef ENABLE_CUDA
 	void SyncFiberInfo();
 	void syncFiberInfo(
-		vector<Fiber> *vec
+		vector<Fiber> *vec,
 		Fiber *fiber, Fiber *gpu_fiber, 
 		int *cpu_count, int *gpu_count,
 		int *cpu_idx, int *gpu_idx

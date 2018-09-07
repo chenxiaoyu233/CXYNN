@@ -135,7 +135,11 @@ ValueType& Matrix<ValueType>::operator () (int c, int a, int b) {
 	assert(1 <= c); assert(c <= channel);
 	assert(1 <= a); assert(a <= row);
 	assert(1 <= b); assert(b <= col);
+#ifdef ENABLE_CUDA
+	return LOCATE(field, c-1, a-1, b-1);
+#else
 	return field[c-1][a-1][b-1];
+#endif
 }
 
 template <class ValueType>
@@ -143,7 +147,7 @@ ValueType& Matrix<ValueType>::operator () (int a, int b) {
 	assert(a <= row); assert(b <= col);
 	assert(1 <= a); assert(1 <= b);
 #ifdef ENABLE_CUDA
-	return LOCATE(field, at, a-1, b-1)
+	return LOCATE(field, at, a-1, b-1);
 #else
 	return field[at][a-1][b-1];
 #endif
@@ -175,7 +179,8 @@ template <class ValueType>
 int Matrix<ValueType>::Channel() { return channel; }
 
 #ifdef ENABLE_CUDA
-// 暂时用不到日志
+template <class ValueType>
+void Matrix<ValueType>::Log() { }
 #else
 template <class ValueType>
 void Matrix<ValueType>::Log() {

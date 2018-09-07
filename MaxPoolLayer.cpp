@@ -1,4 +1,9 @@
 #include "MaxPoolLayer.h"
+// cuda kernels
+#ifdef ENABLE_CUDA
+#include "cuda/kernels.h"
+#endif
+
 
 MaxPoolLayer::MaxPoolLayer(
 	int channel,
@@ -17,6 +22,9 @@ MaxPoolLayer::MaxPoolLayer(
 ) { }
 
 void MaxPoolLayer::pushSpreadBack() { //内部
+#ifdef ENABLE_CUDA
+	kernel_maxpool_push_spread_back(gpu_field, channel * row * col);
+#else
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {
 			Neuron &cur = (*this)(x, y);
@@ -28,6 +36,7 @@ void MaxPoolLayer::pushSpreadBack() { //内部
 			}
 		}
 	}
+#endif
 }
 
 void MaxPoolLayer::SpreadBack() { //外部
@@ -41,6 +50,9 @@ void MaxPoolLayer::SpreadBack() { //外部
 }
 
 void MaxPoolLayer::updateForward() {
+#ifdef ENABLE_CUDA
+	kernel_maxpool_update_forward(gpu_field, channel * row * col);
+#else
 	FOR(c, 1, channel){ this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {
 			Neuron &cur = (*this)(x, y);
@@ -48,8 +60,9 @@ void MaxPoolLayer::updateForward() {
 			for (int i = 0; i < cur.input.size(); i++) {
 				cur.forwardBuffer[0] = max(cur.forwardBuffer[0], cur.input[i].neuron -> forwardBuffer[1]);
 			}
-			cur.forwardBuffer[1] = cur.forwardBuffer[0];
+			cur.forwardBuffer[1] = cur.forwardBuffer[0]; // 强行使用Linear作为激活函数
 			cur.forwardBuffer[2] = 1;
 		}
 	}
+#endif
 }

@@ -12,6 +12,7 @@ class Fiber {
 	double* weightDel; //权值的偏导数
 	Neuron* neuron; 
 
+	Fiber();
 	Fiber(double* weight, double* weightDel, Neuron* neuron);
 	void Log();
 };

@@ -1,0 +1,2 @@
+#cmakedefine ENABLE_CUDA
+#cmakedefine NDEBUG //调试完成之后使用这句话禁用assert

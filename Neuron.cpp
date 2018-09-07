@@ -1,11 +1,16 @@
 #include "Neuron.h"
+// cuda kernels
+#ifdef ENABLE_CUDA
+#include "cuda/kernels.h"
+#endif
+
 
 Neuron::Neuron() {
 	ActiveFunc = NULL;
 	ActiveFuncDelta = NULL;
 #ifdef ENABLE_CUDA
 	input = new vector<Fiber>; input -> clear();
-	output = new vector<output>; output -> clear();
+	output = new vector<Fiber>; output -> clear();
 	gpu_input = gpu_output = cpu_input = cpu_output = NULL;
 	gpu_input_count = gpu_output_count = cpu_input_count = cpu_output_count = NULL;
 	gpu_input_idx = gpu_output_idx = cpu_input_idx = cpu_output_idx = NULL;
@@ -26,7 +31,7 @@ Neuron::Neuron(
 ): ActiveFunc(ActiveFunc), ActiveFuncDelta(ActiveFuncDelta), b(b), bDel(bDel){  
 #ifdef ENABLE_CUDA
 	input = new vector<Fiber>; input -> clear();
-	output = new vector<output>; output -> clear();
+	output = new vector<Fiber>; output -> clear();
 	gpu_input = gpu_output = cpu_input = cpu_output = NULL;
 	gpu_input_count = gpu_output_count = cpu_input_count = cpu_output_count = NULL;
 	gpu_input_idx = gpu_output_idx = cpu_input_idx = cpu_output_idx = NULL;
@@ -142,7 +147,7 @@ void Neuron::SyncFiberInfo() {
 }
 
 void Neuron::syncFiberInfo(
-	vector<Fiber> *vec
+	vector<Fiber> *vec,
 	Fiber *fiber, Fiber *gpu_fiber, 
 	int *cpu_count, int *gpu_count,
 	int *cpu_idx, int *gpu_idx
@@ -154,7 +159,7 @@ void Neuron::syncFiberInfo(
 	cpu_idx = new int[cnt];
 
 	FOR(i, 0, cnt-1) {
-		fiber[i] = vec[i];
+		fiber[i] = (*vec)[i];
 		cpu_idx[i] = fiber[i].neuron -> idx;
 	}
 
@@ -164,6 +169,6 @@ void Neuron::syncFiberInfo(
 
 	cudaMemcpy(cpu_count, gpu_count, sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(fiber, gpu_fiber, sizeof(Fiber) * cnt, cudaMemcpyHostToDevice);
-	cudaMalloc(cpu_idx, gpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice);
+	cudaMemcpy(cpu_idx, gpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice);
 }
 #endif
