@@ -103,11 +103,17 @@ void build_network() {
 	//F6.InputLayer(&C5);
 	//Output.InputLayer(&F6);
 	//
-	
+#ifdef ENABLE_CUDA	
+	Input.SetActionFunc(kernel_Linear, kernel_LinearDel);
+	C1.SetActionFunc(kernel_Linear, kernel_LinearDel);
+	hide.SetActionFunc(kernel_tanh, kernel_tanhDel);
+	Output.SetActionFunc(kernel_Linear, kernel_LinearDel);
+#else
 	Input.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
  	C1.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
 	hide.SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
 	Output.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+#endif
 
 	C1.InputLayer(&Input);
 	hide.InputLayer(&C1);
@@ -263,6 +269,9 @@ void test() {
 }
 
 int main() {
+#ifdef ENABLE_CUDA
+	cuda_init();
+#endif
 	build_network();
 	read_train_data();
 	read_train_label();

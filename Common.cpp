@@ -12,6 +12,7 @@ double Tool::RandDouble(double a, double b, double eps){
 	return RandInt(a, b) * eps;
 }
 
+#ifndef ENABLE_CUDA
 double ActiveFunction::Sigmoid(double x) {
 	return 1.0f/(1.0f + exp(-x));
 }
@@ -52,3 +53,4 @@ double ActiveFunction::Linear(double x) {
 double ActiveFunction::LinearDel(double x) {
 	return 1.0f;
 }
+#endif

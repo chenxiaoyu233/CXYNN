@@ -55,10 +55,19 @@ void Optimizer::LoadFromFile() {
 	FILE *in = fopen(filePath.c_str(), "r");
 	fscanf(in, "%d", &epoch);
 	int sz = 0; fscanf(in, "%d", &sz);
+#ifdef ENABLE_CUDA
+	assert(sz == func -> param_cnt);
+	func -> syncParamFromDeviceToHost();
+	for (int i = 0; i < func -> param_cnt; i++) {
+		fscanf(in, "%lf", (func -> cpu_param)[i]);
+	}
+	func -> syncParamFromHostToDevice();
+#else
 	assert(sz == (func -> param).size()); //保证相同
 	for (int i = 0; i < (func -> param).size(); i++) {
 		fscanf(in, "%lf", (func -> param)[i]);
 	}
+#endif
 	fclose(in);
 }
 
@@ -87,10 +96,18 @@ void Optimizer::SetSaveStep(int step) {
 void Optimizer::Save() {
 	FILE* out = fopen(filePath.c_str(), "w");
 	fprintf(out, "%d\n", epoch);
+#ifdef ENABLE_CUDA
+	fprintf(out, "%d\n", func -> param_cnt);
+	func -> syncParamFromDeviceToHost();
+	for (int i = 0; i < func -> param_cnt; i++) {
+		fprintf(out, "%lf\n", (func -> cpu_param)[i]);
+	}
+#else
 	fprintf(out, "%d\n", (func -> param).size());
 	for (int i = 0; i < (func -> param).size(); i++) {
 		fprintf(out, "%lf\n", *((func -> param)[i]));
 	}
+#endif
 	fclose(out);
 }
 
@@ -114,17 +131,32 @@ void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过�
 	for (int i = 0; i < batchSize; i++) {
 		func -> Update(trainData[seqence[i]], trainLabel[seqence[i]]);
 		meanLoss += func -> GetLoss();
+#ifdef ENABLE_CUDA
+		func -> syncParamFromDeviceToHost();
+		for (int j = 0; j < direction.size(); j++) {
+			direction[j] += (func -> cpu_paramDel)[i];
+		}
+#else
 		for (int j = 0; j < direction.size(); j++) {
 			direction[j] += *((func->paramDel)[j]);
 		}
+#endif
 	}
 
 	UnitlizeVector(direction);
 	meanLoss /= batchSize;
 
+#ifdef ENABLE_CUDA
+	for (int i = 0; i < direction.size(); i++) {
+		direction[i] = -step * direction[i];
+		(func -> cpu_param)[i] += direction[i];
+	}
+	func -> syncParamFromHostToDevice();
+#else
 	for (int i = 0; i < direction.size(); i++) {
 		direction[i] = -step * direction[i];
 		*((func -> param)[i]) += direction[i];
 	}
+#endif
 }
 

@@ -8,12 +8,22 @@ void Layer::layerInit() {
 	//申请空间 + 参数收集
 	FOR(cur, 1, channel){ SetAt(cur); //换面
 		FOR(i, 1, row) FOR(j, 1, col) {
+#ifdef ENABLE_CUDA
+			cudaMalloc(&(*this)(i, j).b, sizeof(double));
+			cudaMalloc(&(*this)(i, j).bDel, sizeof(double));
+#else
 			(*this)(i, j).b = new double;
 			(*this)(i, j).bDel = new double;
+#endif
 			paramPool.push_back((*this)(i, j).b); //收集参数
 			paramDeltaPool.push_back((*this)(i, j).bDel);
 		}
 	}
+#ifdef ENABLE_CUDA
+	// 添加idx, 便于在显存中重构网络.
+	int count = channel * row * col - 1;
+	FOR(i, 0, count) field[count].idx = i;
+#endif
 }
 
 Layer::Layer(int row, int col): Matrix(row, col) { layerInit(); }
@@ -23,16 +33,29 @@ Layer::Layer(int channel, int row, int col)
 
 Layer::~Layer() {
 	for(int i = 0; i < paramPool.size(); i++) {
+#ifdef ENABLE_CUDA
+		cudaFree(paramPool[i]);
+#else
 		delete paramPool[i];
+#endif
 	}
 	for(int i = 0; i < paramDeltaPool.size(); i++) {
+#ifdef ENABLE_CUDA
+		cudaFree(paramDeltaPool[i]);
+#else
 		delete paramDeltaPool[i];
+#endif
 	}
 }
 
 void Layer::Insert(Neuron *a, Neuron *b) { // a -> b
 	double *Wab, *dWab;
+#ifdef ENABLE_CUDA
+	cudaMalloc(&Wab, sizeof(double));
+	cudaMalloc(&dWab, sizeof(double));
+#else
 	Wab = new double; dWab = new double;
+#endif
 	a -> Insert(OUTPUT, Wab, dWab, b);
 	b -> Insert(INPUT, Wab, dWab, a); // 这里的两个w没有实际意义.
 	paramPool.push_back(Wab); //收集参数
@@ -61,6 +84,7 @@ void Layer::SetActionFunc(
 	}
 }
 
+#ifndef ENABLE_CUDA
 void Layer::UpdateForwardBegin() {
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {
@@ -71,22 +95,39 @@ void Layer::UpdateForwardBegin() {
 		Output -> UpdateForward();
 	}
 }
+#endif
 
 void Layer::UpdateForwardBegin(Matrix<double> *other) {
 	assert(row == (other->size()).first); //保证规模相同
 	assert(col == (other->size()).second);
 	assert(channel == other->Channel());
-
+#ifdef ENABLE_CUDA
+	double *gpu_buffer;
+	cudaMalloc(&gpu_buffer, sizeof(double) * channel * row * col);
+	cudaMemcpy(gpu_buffer, other -> field, sizeof(double) * channel * row * col, cudaMemcpyHostToDevice);
+	kernel_layer_set_value(gpu_field, gpu_buffer, channel * row * col);
+	cudaFree(gpu_buffer);
+#else
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {
 			(*this)(x, y).SetValue((*other)(x, y));
 		}
 	}
+#endif
 	if (Output != NULL) {
 		Output -> UpdateForward();
 	}
 }
 
+#ifdef ENABLE_CUDA
+void Layer::updateForward() {
+	kernel_update_forward(gpu_field, channel * row * col);
+}
+
+void Layer::spreadBack() {
+	kernel_spread_back(gpu_field, channel * row * col);
+}
+#else
 void Layer::updateForward() {
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {
@@ -102,6 +143,7 @@ void Layer::spreadBack() {
 		}
 	}
 }
+#endif
 
 void Layer::UpdateForward() {
 	this -> updateForward(); //内部
@@ -129,3 +171,28 @@ void Layer::CollectParam(vector<double*> *param, vector<double*> *paramDel) {
 		Input -> CollectParam(param, paramDel);
 	}
 }
+
+#ifdef ENABLE_CUDA
+void Layer::rebuildOnGPU() {
+	FOR(c, 1, channel) { this -> SetAt(c);
+		FOR(x, 1, row) FOR(y, 1, col) {
+			(*this)(x, y).SyncFiberInfo();
+		}
+	}
+	mallocGpuMemory();
+	syncMemFromHostToDevice();
+	if(Input) kernel_rebuild_input_fiber(Input -> gpu_field, gpu_field, channel * row * col);
+	if(Output) kernel_rebuild_output_fiber(Output -> gpu_field, gpu_field, channel * row * col);
+}
+
+void Layer::RebuildOnGPU() {
+	rebuildOnGPU();
+	if(Input != NULL) {
+		Input -> RebuildOnGPU();
+	}
+}
+
+void Layer::Sync_BackwardBuffer_to_bDel() {
+	kernel_sync_BackwardBuffer_to_bDel(gpu_field, channel * row * col);
+}
+#endif

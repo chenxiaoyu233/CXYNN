@@ -22,6 +22,10 @@ class Layer: public Matrix<Neuron> {
 	virtual void updateForward();
 	virtual void spreadBack();
 
+#ifdef ENABLE_CUDA
+	void rebuildOnGPU(); // 在GPU上重构当前layer
+#endif
+
 	public: 
 	Layer* Input, *Output;
 
@@ -38,11 +42,19 @@ class Layer: public Matrix<Neuron> {
 	virtual void SpreadBack();
 
 	//这个函数用于单独处理输入层
+#ifndef ENABLE_CUDA
 	void UpdateForwardBegin();
+#endif
 	void UpdateForwardBegin(Matrix<double> *other);
 
 	//这个函数用于收集所有的参数
 	void CollectParam(vector<double*> *param, vector<double*> *paramDel);
+
+#ifdef ENABLE_CUDA
+	void RebuildOnGPU(); // 在GPU上重构整个网络
+	void Sync_BackwardBuffer_to_bDel(); // 用于在Estimator中进行同步
+#endif
+
 };
 
 #endif

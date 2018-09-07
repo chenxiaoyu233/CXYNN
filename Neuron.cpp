@@ -3,7 +3,15 @@
 Neuron::Neuron() {
 	ActiveFunc = NULL;
 	ActiveFuncDelta = NULL;
+#ifdef ENABLE_CUDA
+	input = new vector<Fiber>; input -> clear();
+	output = new vector<output>; output -> clear();
+	gpu_input = gpu_output = cpu_input = cpu_output = NULL;
+	gpu_input_count = gpu_output_count = cpu_input_count = cpu_output_count = NULL;
+	gpu_input_idx = gpu_output_idx = cpu_input_idx = cpu_output_idx = NULL;
+#else
 	input.clear(); output.clear();
+#endif
 	b = NULL; bDel = NULL;
 	dropOutFlag = false;
 	forwardBuffer[0] = forwardBuffer[1] = forwardBuffer[2] = 0;
@@ -16,11 +24,36 @@ Neuron::Neuron(
 	double* b,
 	double* bDel
 ): ActiveFunc(ActiveFunc), ActiveFuncDelta(ActiveFuncDelta), b(b), bDel(bDel){  
+#ifdef ENABLE_CUDA
+	input = new vector<Fiber>; input -> clear();
+	output = new vector<output>; output -> clear();
+	gpu_input = gpu_output = cpu_input = cpu_output = NULL;
+	gpu_input_count = gpu_output_count = cpu_input_count = cpu_output_count = NULL;
+	gpu_input_idx = gpu_output_idx = cpu_input_idx = cpu_output_idx = NULL;
+#else
 	input.clear(); output.clear();
+#endif
 	dropOutFlag = false;
 	forwardBuffer[0] = forwardBuffer[1] = forwardBuffer[2] = 0;
 	backwardBuffer = 0;
 }
+
+#ifdef ENABLE_CUDA
+Neuron::~Neuron() {
+	if(gpu_input != NULL) { cudaFree(gpu_input); }
+	if(gpu_output != NULL) { cudaFree(gpu_output); }
+	if(cpu_input != NULL) { delete[] cpu_input; }
+	if(cpu_output != NULL) { delete[] cpu_output; }
+	if(gpu_input_count != NULL) { cudaFree(gpu_input_count); }
+	if(gpu_output_count != NULL) { cudaFree(gpu_output_count); }
+	if(cpu_input_count != NULL) { delete cpu_input_count; }
+	if(cpu_output_count != NULL) { delete cpu_output_count; }
+	if(cpu_input_idx != NULL) { delete[] cpu_input_idx; }
+	if(cpu_output_idx != NULL) { delete[] cpu_output_idx; }
+	if(gpu_input_idx != NULL) { cudaFree(gpu_input_idx); }
+	if(gpu_output_idx != NULL) { cudaFree(gpu_output_idx); }
+}
+#endif
 
 void Neuron::Insert(
 	NeuronIO type, 
@@ -28,16 +61,23 @@ void Neuron::Insert(
 	double* dWeight, 
 	Neuron* neighbor
 ) {
+#ifdef ENABLE_CUDA
+	if (type == INPUT) input -> push_back(Fiber(weight, dWeight, neighbor));
+	if (type == OUTPUT) output -> push_back(Fiber(weight, dWeight, neighbor));
+#else
 	if (type == INPUT) input.push_back(Fiber(weight, dWeight, neighbor));
 	if (type == OUTPUT) output.push_back(Fiber(weight, dWeight, neighbor));
+#endif
 }
 
+#ifndef ENABLE_CUDA
 void Neuron::SetValue(double x){
 	x += *b;
 	forwardBuffer[0] = x;
 	forwardBuffer[1] = ActiveFunc(x);
 	forwardBuffer[2] = ActiveFuncDelta(x);
 }
+#endif
 
 void Neuron::SetActionFunc(
 		double (*ActiveFunc) (double),
@@ -47,6 +87,7 @@ void Neuron::SetActionFunc(
 	this -> ActiveFuncDelta = ActiveFuncDelta;
 }
 
+#ifndef ENABLE_CUDA
 void Neuron::UpdateBuffer() {
 	forwardBuffer[0] = 0;
 	for (int i = 0; i < input.size(); i++) {
@@ -66,9 +107,12 @@ void Neuron::SpreadBack() {
 	}
 	*bDel += backwardBuffer;
 }
-
+#endif
 
 void Neuron::Log() {
+#ifdef ENABLE_CUDA
+// 暂时不需要日志
+#else
 	printf("%.2lf %.2lf %.2lf\n", forwardBuffer[0], forwardBuffer[1], forwardBuffer[2]);
 	printf("%.2lf %.2lf\n", backwardBuffer);
 	for (int i = 0; i < input.size(); i++) {
@@ -78,4 +122,48 @@ void Neuron::Log() {
 		output[i].Log();
 	}
 	printf("%.2lf %.2lf\n", b, bDel);
+#endif
 }
+
+#ifdef ENABLE_CUDA
+void Neuron::SyncFiberInfo() {
+	syncFiberInfo(
+		input,
+		cpu_input, gpu_input,
+		cpu_input_count, gpu_input_count,
+		cpu_input_idx, gpu_input_idx
+	);
+	syncFiberInfo(
+		output,
+		cpu_output, gpu_output,
+		cpu_output_count, gpu_output_count,
+		cpu_output_idx, gpu_output_idx
+	);
+}
+
+void Neuron::syncFiberInfo(
+	vector<Fiber> *vec
+	Fiber *fiber, Fiber *gpu_fiber, 
+	int *cpu_count, int *gpu_count,
+	int *cpu_idx, int *gpu_idx
+) {
+	int cnt = vec -> size();
+	cpu_count = new int; 
+	*cpu_count = cnt;
+	fiber = new Fiber[cnt];
+	cpu_idx = new int[cnt];
+
+	FOR(i, 0, cnt-1) {
+		fiber[i] = vec[i];
+		cpu_idx[i] = fiber[i].neuron -> idx;
+	}
+
+	cudaMalloc(&gpu_count, sizeof(int));
+	cudaMalloc(&gpu_fiber, sizeof(Fiber) * cnt);
+	cudaMalloc(&gpu_idx, sizeof(int) * cnt);
+
+	cudaMemcpy(cpu_count, gpu_count, sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(fiber, gpu_fiber, sizeof(Fiber) * cnt, cudaMemcpyHostToDevice);
+	cudaMalloc(cpu_idx, gpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice);
+}
+#endif

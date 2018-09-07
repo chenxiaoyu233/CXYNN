@@ -21,6 +21,13 @@ class FuncAbstractor {
 	Layer *Input, *Output; //暂时公有
 	vector<double*> param;
 	vector<double*> paramDel;
+#ifdef ENABLE_CUDA
+	int param_cnt;
+	double *cpu_param, *cpu_paramDel; // 在host中暂存参数(非真实参数)
+	double *gpu_param, *gpu_paramDel; // 在gpu中暂存参数(非真实参数)
+	double **cpu_param_ptr, **cpu_paramDel_ptr; //cpu中指向真实参数的指针(预处理完马上销毁)
+	double **gpu_param_ptr, **gpu_paramDel_ptr; //gpu中指向真实参数的指针
+#endif
 
 	FuncAbstractor(
 		Layer* Input, 
@@ -28,6 +35,11 @@ class FuncAbstractor {
 	   	Estimator* estimator,
 	   	double L2param
 	);
+#ifdef ENABLE_CUDA
+	~FuncAbstractor();
+	void syncParamFromHostToDevice(); // 将cpu_param中的参数同步到GPU中的真实参数
+	void syncParamFromDeviceToHost(); // 将GPU中的真实参数同步到cpu_param中.
+#endif
 
 	void Randomization(int seed, int l, int r);
 	void Randomization(int seed, double l, double r, double eps);
