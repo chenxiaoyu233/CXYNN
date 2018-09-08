@@ -78,9 +78,9 @@ void Optimizer::LoadFromFile() {
 
 void Optimizer::Log() {
 	printf("epoch: %d/%d, loss: %lf\n", epoch, maxEpoch, meanLoss);
-	FOR(i, 1, 10) {
-		printf("%.3f ", (*(func -> Output))(1, i).forwardBuffer[1]);
-	} puts("");
+	FOR(i, 1, 1) {
+		//printf("%.3f ", (*(func -> Output))(1, i).forwardBuffer[1]);
+	} //puts("");
 }
 
 void Optimizer::TrainFromNothing() {
@@ -139,7 +139,7 @@ void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过�
 #ifdef ENABLE_CUDA
 		func -> syncParamFromDeviceToHost();
 		for (int j = 0; j < direction.size(); j++) {
-			direction[j] += (func -> cpu_paramDel)[i];
+			direction[j] += (func -> cpu_paramDel)[j];
 		}
 #else
 		for (int j = 0; j < direction.size(); j++) {

@@ -1,15 +1,19 @@
-/*#include "CXYNeuronNetwork.h"
+#include "CXYNeuronNetwork.h"
 
-Layer input_layer(1, 1);
-Layer output_layer(1, 1);
+DenseLayer *input_layer;
+DenseLayer *output_layer;
 
-Estimator_QuadraticCost estimator(&output_layer);
+Estimator_QuadraticCost *estimator;
 
 void build_network() {
-	input_layer.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	output_layer.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	input_layer = new DenseLayer(1, 1);
+	output_layer = new DenseLayer(1, 1);
+	estimator = new Estimator_QuadraticCost(output_layer);
 
-	output_layer.InputFullConnect(&input_layer);
+	input_layer -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+	output_layer -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+
+	output_layer -> InputLayer(input_layer);
 }
 
 vector<Matrix<double>*> trainData;
@@ -28,14 +32,17 @@ void genTrainData() {
 }
 
 void train() {
-	FuncAbstractor func(&input_layer, &output_layer, &estimator);
+	FuncAbstractor func(input_layer, output_layer, estimator, 0.1);
 	Optimizer opt(
 		&func,
 		0.001f,
 		20000,
 		trainData,
 		trainLabel,
-		"mnist/train_backup"
+		"mnist/train_backup",
+		2333,
+		-0.05, 0.05, 0.00001,
+		1000
 	);
 
 	opt.SetSaveStep(5);
@@ -44,14 +51,17 @@ void train() {
 }
 
 void test() {
-	FuncAbstractor func(&input_layer, &output_layer, &estimator);
+	FuncAbstractor func(input_layer, output_layer, estimator, 0.1);
 	Predictor pre(
 		&func,
 		0.001f,
 		20000,
 		trainData,
 		trainLabel,
-		"mnist/train_backup"
+		"mnist/train_backup",
+		2333,
+		-0.05, 0.05, 0.00001,
+		200
 	);
 
 	Matrix<double> *data = new Matrix<double>(1, 1);
@@ -65,13 +75,16 @@ void test() {
 }
 
 int main() {
+#ifdef ENABLE_CUDA
+	cuda_init();
+#endif
 	build_network();
 	genTrainData();
 	train();
 	test();
 	return 0;
-}*/
-
+}
+/*
 #include "CXYNeuronNetwork.h"
 typedef unsigned char byte;
 
@@ -268,4 +281,4 @@ int main() {
 	//test();
 	return 0;
 }
-
+*/

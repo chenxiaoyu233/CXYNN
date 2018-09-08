@@ -95,7 +95,7 @@ void kernel_spread_back(Neuron *gpu_field, int len) {
 __global__ void __sync_BackwardBuffer_to_bDel__ (Neuron *gpu_field, int len) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	if(idx >= len) return;
-	*(gpu_field[idx].bDel) = gpu_field[idx].backwardBuffer;
+	*(gpu_field[idx].bDel) += gpu_field[idx].backwardBuffer;
 }
 
 void kernel_sync_BackwardBuffer_to_bDel(Neuron *gpu_field, int len) {
@@ -277,11 +277,21 @@ void kernel_debug_print_int(int *x) {
 }
 
 __global__ void __debug_print_double__ (double *x) {
-	printf("%ld\n", *x);
+	printf("%lf\n", *x);
 }
 
 void kernel_debug_print_double(double *x) {
 	__debug_print_double__ <<<1, 1>>> (x);
+	CHECK_KERNEL();
+	cudaDeviceSynchronize();
+}
+
+__global__ void __debug_print_ptr_double__ (double **x) {
+	printf("%lf\n", **x);
+}
+
+void kernel_debug_print_ptr_double(double **x) {
+	__debug_print_ptr_double__ <<<1, 1>>> (x);
 	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }

@@ -53,7 +53,7 @@ void Estimator_QuadraticCost::_lossDel(Matrix<double> *expect) {
 		Neuron& cur = (*Input)(x, y);
 		cur.backwardBuffer = 2 * (cur.forwardBuffer[1] - (*expect)(x, y) ) * cur.forwardBuffer[2];
 #ifndef ENABLE_CUDA
-		*cur.bDel = cur.backwardBuffer;
+		*cur.bDel += cur.backwardBuffer; // 这里改为 += 不然正则化就没有效果了
 #endif
 	}
 }
@@ -92,7 +92,7 @@ void Estimator_Softmax::_lossDel(Matrix<double> *expect) {
 			(*Input)(i).backwardBuffer = f * (*Input)(i).forwardBuffer[2];
 		}
 #ifndef ENABLE_CUDA
-		*((*Input)(i).bDel) = (*Input)(i).backwardBuffer;
+		*((*Input)(i).bDel) += (*Input)(i).backwardBuffer; // 这里改为 += 不然正则化就没有效果了
 #endif
 	}
 }
