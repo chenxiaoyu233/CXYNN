@@ -10,8 +10,13 @@ void build_network() {
 	output_layer = new DenseLayer(1, 1);
 	estimator = new Estimator_QuadraticCost(output_layer);
 
+#ifdef ENABLE_CUDA
 	input_layer -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 	output_layer -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+#else
+	input_layer -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	output_layer -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+#endif
 
 	output_layer -> InputLayer(input_layer);
 }
