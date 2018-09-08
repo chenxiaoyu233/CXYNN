@@ -71,9 +71,9 @@ class Neuron {
 	void SyncFiberInfo();
 	void syncFiberInfo(
 		vector<Fiber> *vec,
-		Fiber *fiber, Fiber *gpu_fiber, 
-		int *cpu_count, int *gpu_count,
-		int *cpu_idx, int *gpu_idx
+		Fiber **fiber, Fiber **gpu_fiber, 
+		int **cpu_count, int **gpu_count,
+		int **cpu_idx, int **gpu_idx
 	);
 #endif
 	void Log();

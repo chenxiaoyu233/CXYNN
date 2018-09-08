@@ -134,41 +134,41 @@ void Neuron::Log() {
 void Neuron::SyncFiberInfo() {
 	syncFiberInfo(
 		input,
-		cpu_input, gpu_input,
-		cpu_input_count, gpu_input_count,
-		cpu_input_idx, gpu_input_idx
+		&cpu_input, &gpu_input,
+		&cpu_input_count, &gpu_input_count,
+		&cpu_input_idx, &gpu_input_idx
 	);
 	syncFiberInfo(
 		output,
-		cpu_output, gpu_output,
-		cpu_output_count, gpu_output_count,
-		cpu_output_idx, gpu_output_idx
+		&cpu_output, &gpu_output,
+		&cpu_output_count, &gpu_output_count,
+		&cpu_output_idx, &gpu_output_idx
 	);
 }
 
 void Neuron::syncFiberInfo(
 	vector<Fiber> *vec,
-	Fiber *fiber, Fiber *gpu_fiber, 
-	int *cpu_count, int *gpu_count,
-	int *cpu_idx, int *gpu_idx
+	Fiber **fiber, Fiber **gpu_fiber, 
+	int **cpu_count, int **gpu_count,
+	int **cpu_idx, int **gpu_idx
 ) {
 	int cnt = vec -> size();
-	cpu_count = new int; 
-	*cpu_count = cnt;
-	fiber = new Fiber[cnt];
-	cpu_idx = new int[cnt];
+	*cpu_count = new int; 
+	**cpu_count = cnt;
+	*fiber = new Fiber[cnt];
+	*cpu_idx = new int[cnt];
 
 	FOR(i, 0, cnt-1) {
-		fiber[i] = (*vec)[i];
-		cpu_idx[i] = fiber[i].neuron -> idx;
+		(*fiber)[i] = (*vec)[i];
+		(*cpu_idx)[i] = (*fiber)[i].neuron -> idx;
 	}
 
-	CHECK( cudaMalloc(&gpu_count, sizeof(int)) );
-	CHECK( cudaMalloc(&gpu_fiber, sizeof(Fiber) * cnt) );
-	CHECK( cudaMalloc(&gpu_idx, sizeof(int) * cnt) );
+	CHECK( cudaMalloc(gpu_count, sizeof(int)) );
+	CHECK( cudaMalloc(gpu_fiber, sizeof(Fiber) * cnt) );
+	CHECK( cudaMalloc(gpu_idx, sizeof(int) * cnt) );
 
-	CHECK( cudaMemcpy(gpu_count, cpu_count, sizeof(int), cudaMemcpyHostToDevice) );
-	CHECK( cudaMemcpy(gpu_fiber, fiber, sizeof(Fiber) * cnt, cudaMemcpyHostToDevice) );
-	CHECK( cudaMemcpy(gpu_idx, cpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(*gpu_count, *cpu_count, sizeof(int), cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(*gpu_fiber, *fiber, sizeof(Fiber) * cnt, cudaMemcpyHostToDevice) );
+	CHECK( cudaMemcpy(*gpu_idx, *cpu_idx, sizeof(int) * cnt, cudaMemcpyHostToDevice) );
 }
 #endif

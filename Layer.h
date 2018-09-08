@@ -23,7 +23,8 @@ class Layer: public Matrix<Neuron> {
 	virtual void spreadBack();
 
 #ifdef ENABLE_CUDA
-	void rebuildOnGPU(); // 在GPU上重构当前layer
+	void syncFiber(); // 在GPU上重构当前layer
+	void rebuildFiberOnGpu(); // 在GPU上重建fiber
 #endif
 
 	public: 
@@ -51,7 +52,7 @@ class Layer: public Matrix<Neuron> {
 	void CollectParam(vector<double*> *param, vector<double*> *paramDel);
 
 #ifdef ENABLE_CUDA
-	void RebuildOnGPU(); // 在GPU上重构整个网络
+	void RebuildOnGPU(); // 在GPU上重构整个网络(主要用于重建Fiber连接)
 	void Sync_BackwardBuffer_to_bDel(); // 用于在Estimator中进行同步
 #endif
 

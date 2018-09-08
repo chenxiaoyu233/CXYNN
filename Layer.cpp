@@ -27,7 +27,7 @@ void Layer::layerInit() {
 #ifdef ENABLE_CUDA
 	// 添加idx, 便于在显存中重构网络.
 	int count = channel * row * col - 1;
-	FOR(i, 0, count) field[count].idx = i;
+	FOR(i, 0, count) field[i].idx = i;
 #endif
 }
 
@@ -178,7 +178,7 @@ void Layer::CollectParam(vector<double*> *param, vector<double*> *paramDel) {
 }
 
 #ifdef ENABLE_CUDA
-void Layer::rebuildOnGPU() {
+void Layer::syncFiber() {
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {
 			(*this)(x, y).SyncFiberInfo();
@@ -186,15 +186,20 @@ void Layer::rebuildOnGPU() {
 	}
 	mallocGpuMemory();
 	syncMemFromHostToDevice();
+}
+
+void Layer::rebuildFiberOnGpu() {
 	if(Input) kernel_rebuild_input_fiber(Input -> gpu_field, gpu_field, channel * row * col);
 	if(Output) kernel_rebuild_output_fiber(Output -> gpu_field, gpu_field, channel * row * col);
 }
 
 void Layer::RebuildOnGPU() {
-	rebuildOnGPU();
+	syncFiber();
 	if(Input != NULL) {
 		Input -> RebuildOnGPU();
 	}
+	// 回溯时重建网络(保证空间已经申请好)
+	rebuildFiberOnGpu();
 }
 
 void Layer::Sync_BackwardBuffer_to_bDel() {

@@ -75,50 +75,35 @@ int main() {
 #include "CXYNeuronNetwork.h"
 typedef unsigned char byte;
 
-/*
-DenseLayer Input(28, 28); //
-ConvLayer C1(6, 28, 28, 5, 5, 1, 1, 2, 2);
-//MaxPoolLayer S2(6, 14, 14, 2, 2, 2, 2, 0, 0);
-//ConvLayer C3(16, 10, 10, 5, 5, 1, 1, 0, 0);
-//MaxPoolLayer S4(16, 5, 5, 2, 2, 2, 2, 0, 0);
-//DenseLayer C5(1, 120);
-//DenseLayer F6(1, 84);
-DenseLayer hide(1, 100);
-DenseLayer Output(1, 10);
+DenseLayer *Input;
+ConvLayer *C1;
+DenseLayer *hide;
+DenseLayer *Output;
 
-Estimator_Softmax estimator(&Output);
+Estimator_Softmax *estimator;
 
 void build_network() {
-	//Input.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	//C1.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	//C3.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	//C5.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	//F6.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	//Output.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	Input = new DenseLayer(28, 28); //
+	C1 = new ConvLayer(6, 28, 28, 5, 5, 1, 1, 2, 2);
+	hide = new DenseLayer(1, 100);
+	Output = new DenseLayer(1, 10);
 
-	//C1.InputLayer(&Input);
-	//S2.InputLayer(&C1);
-	//C3.InputLayer(&S2);
-	//S4.InputLayer(&C3);
-	//C5.InputLayer(&S4);
-	//F6.InputLayer(&C5);
-	//Output.InputLayer(&F6);
-	//
+	estimator = new Estimator_Softmax(Output);
 #ifdef ENABLE_CUDA	
-	Input.SetActionFunc(kernel_Linear, kernel_LinearDel);
-	C1.SetActionFunc(kernel_Linear, kernel_LinearDel);
-	hide.SetActionFunc(kernel_tanh, kernel_tanhDel);
-	Output.SetActionFunc(kernel_Linear, kernel_LinearDel);
+	Input -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+	C1 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+	hide -> SetActionFunc(kernel_tanh, kernel_tanhDel);
+	Output -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 #else
-	Input.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
- 	C1.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	hide.SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
-	Output.SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	Input -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+ 	C1 -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
+	hide -> SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
+	Output -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
 #endif
 
-	C1.InputLayer(&Input);
-	hide.InputLayer(&C1);
-	Output.InputLayer(&hide);
+	C1 -> InputLayer(Input);
+	hide -> InputLayer(C1);
+	Output -> InputLayer(hide);
 }
 
 vector<Matrix<double>*> trainData;
@@ -205,7 +190,7 @@ void read_test_label() {
 
 void train() {
 	puts("initialize functionAbstractor");
-	FuncAbstractor funcAbstractor(&Input, &Output, &estimator, 0.1);
+	FuncAbstractor funcAbstractor(Input, Output, estimator, 0.1);
 	puts("complete");
 
 
@@ -233,7 +218,7 @@ void train() {
 
 void test() {
 	puts("initialize functionAbstractor");
-	FuncAbstractor funcAbstractor(&Input, &Output, &estimator, 0.1);
+	FuncAbstractor funcAbstractor(Input, Output, estimator, 0.1);
 	puts("complete");
 
 	puts("initialize predictor");
@@ -268,34 +253,11 @@ void test() {
 	printf("%d/%d\n", correct, testData.size());
 
 }
-*/
-
-class Data {
-	public:
-	double *b;
-	double *bDel;
-};
-
-class List: public Matrix<Data> {
-	public:
-	List(): Matrix(28, 28) { 
-		malloc_param();
-	}
-	void malloc_param() {
-		for(int i = 1; i <= 28; i++)
-		for(int j = 1; j <= 28; j++) {
-			cudaMalloc(&(*this)(i, j).b, sizeof(double));
-		}
-	}
-};
-
 
 int main() {
 #ifdef ENABLE_CUDA
-	List test;
 	cuda_init();
 #endif
-	/*
 	build_network();
 	read_train_data();
 	read_train_label();
@@ -303,7 +265,6 @@ int main() {
 	read_test_label();
 
 	train();
-	*/
 	//test();
 	return 0;
 }

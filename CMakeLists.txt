@@ -43,6 +43,7 @@ if (ENABLE_CUDA)
 	target_link_libraries (CXYNeuronNetwork cuda_kernel)
 	set (CUDA_FLAGS "-g ${CUDA_FLAGS}")
 	set (CUDA_FLAGS "-G ${CUDA_FLAGS}")
+	set (CUDA_FLAGS "-lineinfo ${CUDA_FLAGS}")
 endif (ENABLE_CUDA)
 
 # 安装选项
