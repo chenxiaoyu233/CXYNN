@@ -44,4 +44,9 @@ void active_function_register();
 
 void cuda_init(); // cuda初始化
 
+#include <cstdio>
+
+void kernel_debug_print_int(int *x);
+void kernel_debug_print_double(double *x);
+void kernel_debug_print_ptr(void **x);
 #endif

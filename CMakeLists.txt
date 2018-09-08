@@ -2,7 +2,7 @@
 cmake_minimum_required (VERSION 2.6)
 
 # 项目信息
-project (CXYNeuronNetwork CXX CUDA)
+project (CXYNeuronNetwork)
 
 # 添加cuda库
 find_package(CUDA REQUIRED)
@@ -44,6 +44,7 @@ if (ENABLE_CUDA)
 	set (CUDA_FLAGS "-g ${CUDA_FLAGS}")
 	set (CUDA_FLAGS "-G ${CUDA_FLAGS}")
 	set (CUDA_FLAGS "-lineinfo ${CUDA_FLAGS}")
+	set (CUDA_FLAGS "-arch sm_61 ${CUDA_FLAGS}")
 endif (ENABLE_CUDA)
 
 # 安装选项

@@ -15,6 +15,15 @@ do {\
 		 exit(1);\
 	}\
 } while(0)
+
+#define CHECK_KERNEL() \
+do {\
+	cudaError_t err = cudaPeekAtLastError();\
+	if (err != cudaSuccess) {\
+		 fprintf(stderr, "Kernel error %s:%d Returned:%s\n", __FILE__, __LINE__, cudaGetErrorString(err));\
+		 exit(1);\
+	}\
+} while(0)
 #endif
 
 

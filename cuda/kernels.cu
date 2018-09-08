@@ -33,6 +33,7 @@ __global__ void __rebuild_input_fiber__ (Neuron *input_field, Neuron *gpu_field,
 
 void kernel_rebuild_input_fiber(Neuron *input_field, Neuron *gpu_field, int len) {
 	__rebuild_input_fiber__<<<grid_size(len), block_size()>>>(input_field, gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -46,6 +47,7 @@ __global__ void __rebuild_output_fiber__ (Neuron *output_field, Neuron *gpu_fiel
 
 void kernel_rebuild_output_fiber(Neuron *output_field, Neuron *gpu_field, int len) {
 	__rebuild_output_fiber__<<<grid_size(len), block_size()>>>(output_field, gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -64,6 +66,7 @@ __global__ void __update_forward__ (Neuron *gpu_field, int len) {
 
 void kernel_update_forward(Neuron *gpu_field, int len) {
 	__update_forward__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -85,6 +88,7 @@ __global__ void __spread_back__ (Neuron *gpu_field, int len) {
 
 void kernel_spread_back(Neuron *gpu_field, int len) {
 	__spread_back__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -96,6 +100,7 @@ __global__ void __sync_BackwardBuffer_to_bDel__ (Neuron *gpu_field, int len) {
 
 void kernel_sync_BackwardBuffer_to_bDel(Neuron *gpu_field, int len) {
 	__sync_BackwardBuffer_to_bDel__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -107,6 +112,7 @@ __global__ void __sync_param_from_host_to_device__ (double **param_ptr, double *
 
 void kernel_sync_param_from_host_to_device(double **param_ptr, double *param, int cnt) {
 	__sync_param_from_host_to_device__<<<grid_size(cnt), block_size()>>>(param_ptr, param, cnt);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -118,6 +124,7 @@ __global__ void __sync_param_from_device_to_host__ (double **param_ptr, double *
 
 void kernel_sync_param_from_device_to_host(double **param_ptr, double *param, int cnt) {
 	__sync_param_from_device_to_host__<<<grid_size(cnt), block_size()>>>(param_ptr, param, cnt);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -131,6 +138,7 @@ __global__ void __layer_set_value__ (Neuron *gpu_field, double *buffer, int len)
 
 void kernel_layer_set_value(Neuron *gpu_field, double *buffer, int len) {
 	__layer_set_value__<<<grid_size(len), block_size()>>>(gpu_field, buffer, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -146,6 +154,7 @@ __global__ void __maxpool_push_spread_back__ (Neuron *gpu_field, int len) {
 
 void kernel_maxpool_push_spread_back(Neuron *gpu_field, int len) {
 	__maxpool_push_spread_back__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -163,6 +172,7 @@ __global__ void __maxpool_update_forward__ (Neuron *gpu_field, int len) {
 
 void kernel_maxpool_update_forward(Neuron *gpu_field, int len) {
 	__maxpool_update_forward__<<<grid_size(len), block_size()>>>(gpu_field, len);
+	CHECK_KERNEL();
 	cudaDeviceSynchronize();
 }
 
@@ -256,3 +266,32 @@ void cuda_init() {
 	active_function_register();
 }
 
+__global__ void __debug_print_int__ (int *x) {
+	printf("%d\n", *x);
+}
+
+void kernel_debug_print_int(int *x) {
+	__debug_print_int__ <<<1, 1>>> (x);
+	CHECK_KERNEL();
+	cudaDeviceSynchronize();
+}
+
+__global__ void __debug_print_double__ (double *x) {
+	printf("%ld\n", *x);
+}
+
+void kernel_debug_print_double(double *x) {
+	__debug_print_double__ <<<1, 1>>> (x);
+	CHECK_KERNEL();
+	cudaDeviceSynchronize();
+}
+
+__global__ void __debug_print_ptr__ (void **x) {
+	printf("0x%p\n", *x);
+}
+
+void kernel_debug_print_ptr(void **x) {
+	__debug_print_ptr__ <<<1, 1>>> (x);
+	CHECK_KERNEL();
+	cudaDeviceSynchronize();
+}

@@ -22,8 +22,13 @@ void ConvLayer::allocateCoreParamMem(int InChannel) {
 	if (Wab == NULL) Wab = new Matrix<double*>(InChannel, coreRow, coreCol);
 	if (dWab == NULL) dWab = new Matrix<double*>(InChannel, coreRow, coreCol);
 	FOR(c, 1, InChannel) FOR(x, 1, coreRow) FOR(y, 1, coreCol) {
+#ifdef ENABLE_CUDA
+		CHECK( cudaMalloc(&(*Wab)(c, x, y), sizeof(double)) );
+		CHECK( cudaMalloc(&(*dWab)(c, x, y), sizeof(double)) );
+#else
 		(*Wab)(c, x, y) = new double; 
 		(*dWab)(c, x, y) = new double;
+#endif
 		paramPool.push_back((*Wab)(c, x, y));
 		paramDeltaPool.push_back((*dWab)(c, x, y));
 	}

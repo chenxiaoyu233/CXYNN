@@ -24,8 +24,8 @@ FuncAbstractor::FuncAbstractor(
 	param_cnt = param.size();
 	cpu_param = new double[param_cnt];
 	cpu_paramDel = new double[param_cnt];
-	CHECK( cudaMalloc(&gpu_param_ptr, sizeof(double**) * param_cnt) );
-	CHECK( cudaMalloc(&gpu_paramDel_ptr, sizeof(double**) * param_cnt) );
+	CHECK( cudaMalloc(&gpu_param_ptr, sizeof(double*) * param_cnt) );
+	CHECK( cudaMalloc(&gpu_paramDel_ptr, sizeof(double*) * param_cnt) );
 	CHECK( cudaMalloc(&gpu_param, sizeof(double) * param_cnt) );
 	CHECK( cudaMalloc(&gpu_paramDel, sizeof(double) * param_cnt) );
 
