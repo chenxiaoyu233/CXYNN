@@ -70,18 +70,13 @@ void FuncAbstractor::syncParamFromDeviceToHost() {
 
 void FuncAbstractor::L2regularization() {
 #ifdef ENABLE_CUDA
-	syncParamFromDeviceToHost();
-	double del = 0;
-	for (int i = 0; i < param_cnt; i++) {
-		del += cpu_param[i] * cpu_param[i];
-	}
+	kernel_sync_param_from_device_to_host(gpu_param_ptr, gpu_param, param_cnt);
+	double del = kernel_vector_dot(gpu_param, gpu_param, param_cnt);
 	del /= 2 * param_cnt;
 	del *= L2param;
 	loss += del;
-	for (int i = 0; i < param_cnt; i++) {
-		cpu_paramDel[i] += cpu_param[i] * L2param / param_cnt;
-	}
-	syncParamFromHostToDevice();
+	kernel_vector_add_to_with_factor(gpu_paramDel, gpu_param, param_cnt, L2param / param_cnt);
+	kernel_sync_param_from_host_to_device(gpu_paramDel_ptr, gpu_paramDel, param_cnt);
 #else
 	// 正则化Loss 
 	double del = 0;
@@ -131,9 +126,8 @@ void FuncAbstractor::Randomization(int seed, double l, double r, double eps) {
 
 void FuncAbstractor::ClearParamDel() {
 #ifdef ENABLE_CUDA
-	syncParamFromDeviceToHost();
-	for (int i = 0; i < param_cnt; i++) cpu_paramDel[i] = 0;
-	syncParamFromHostToDevice();
+	kernel_vector_set_zero(gpu_paramDel, param_cnt);
+	kernel_sync_param_from_host_to_device(gpu_paramDel_ptr, gpu_paramDel, param_cnt);
 #else
 	for (int i = 0; i < paramDel.size(); i++) *(paramDel[i]) = 0;
 #endif

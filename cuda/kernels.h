@@ -22,6 +22,11 @@ void kernel_sync_param_from_device_to_host(double **param_ptr, double *param, in
 void kernel_layer_set_value(Neuron *gpu_field, double *buffer, int len);
 void kernel_maxpool_push_spread_back(Neuron *gpu_field, int len);
 void kernel_maxpool_update_forward(Neuron *gpu_field, int len);
+void kernel_vector_set_zero(double *vec, int len);
+double kernel_vector_dot(double *vec_a, double *vec_b, int len);
+void kernel_vector_add_to_with_factor(double *gpu_param, double *gpu_paramDel, int len, double factor);
+void kernel_vector_add_to(double *dst, double *src, int len);
+void kernel_vector_mutiply(double *vec, double factor, int len);
 
 typedef double (*ACTFUNC) (double);
 

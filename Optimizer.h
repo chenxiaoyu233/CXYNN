@@ -24,7 +24,11 @@ class Optimizer {
 	vector<Matrix<double>*> trainData;
 	vector<Matrix<double>*> trainLabel;
 
+#ifdef ENABLE_CUDA
+	double *gpu_direction;
+#else
 	vector<double> direction;
+#endif
 
 	void TrainLoop();
 	void LoadFromFile();
@@ -48,7 +52,11 @@ class Optimizer {
 	void SetSaveStep(int step);
 
 	//用于标准化输入数据
+#ifdef ENABLE_CUDA
+	void UnitlizeVector(double *gpu_direction, int len);
+#else
 	void UnitlizeVector(vector<double> &data); //单位化向量
+#endif
 	void NormalizeData(Matrix<double>* data);
 };
 

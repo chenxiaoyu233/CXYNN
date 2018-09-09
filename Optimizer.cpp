@@ -28,8 +28,12 @@ Optimizer::Optimizer(
 
 	epoch = 0;
 	saveStep = 100;
+#ifdef ENABLE_CUDA
+	CHECK( cudaMalloc(&gpu_direction, (func -> param_cnt) * sizeof(double)) );
+#else
 	direction.clear();
 	direction.resize((func->param).size(), 0);
+#endif
 }
 
 void Optimizer::NormalizeData(Matrix<double>* data) {
@@ -116,12 +120,20 @@ void Optimizer::Save() {
 	fclose(out);
 }
 
+#ifdef ENABLE_CUDA
+void Optimizer::UnitlizeVector(double *gpu_direction, int len) {
+	double del = kernel_vector_dot(gpu_direction, gpu_direction, len);
+	del = sqrt(del);
+	kernel_vector_mutiply(gpu_direction, 1.0f/del, len);
+}
+#else
 void Optimizer::UnitlizeVector(vector<double> &data) {
 	double del = 0;
 	for (int i = 0; i < data.size(); i++) del += data[i] * data[i];
 	del = sqrt(del);
 	for (int i = 0; i < data.size(); i++) data[i] /= del;
 }
+#endif
 
 void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过程 (SGD)
 	vector<int> seqence;
@@ -130,17 +142,19 @@ void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过�
 	random_shuffle(seqence.begin(), seqence.end());
 
 	meanLoss = 0;
+#ifdef ENABLE_CUDA
+	kernel_vector_set_zero(gpu_direction, func -> param_cnt);
+#else
 	assert((func -> param).size() == direction.size());
 	for (int i = 0; i < direction.size(); i++) direction[i] = 0;
+#endif
 
 	for (int i = 0; i < batchSize; i++) {
 		func -> Update(trainData[seqence[i]], trainLabel[seqence[i]]);
 		meanLoss += func -> GetLoss();
 #ifdef ENABLE_CUDA
-		func -> syncParamFromDeviceToHost();
-		for (int j = 0; j < direction.size(); j++) {
-			direction[j] += (func -> cpu_paramDel)[j];
-		}
+		kernel_sync_param_from_device_to_host(func -> gpu_paramDel_ptr, func -> gpu_paramDel, func -> param_cnt);
+		kernel_vector_add_to(gpu_direction, func -> gpu_paramDel, func -> param_cnt);
 #else
 		for (int j = 0; j < direction.size(); j++) {
 			direction[j] += *((func->paramDel)[j]);
@@ -148,15 +162,16 @@ void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过�
 #endif
 	}
 
+#ifdef ENABLE_CUDA
+	UnitlizeVector(gpu_direction, func -> param_cnt);
+#else
 	UnitlizeVector(direction);
+#endif
 	meanLoss /= batchSize;
 
 #ifdef ENABLE_CUDA
-	for (int i = 0; i < direction.size(); i++) {
-		direction[i] = -step * direction[i];
-		(func -> cpu_param)[i] += direction[i];
-	}
-	func -> syncParamFromHostToDevice();
+	kernel_vector_add_to_with_factor(func -> gpu_param, gpu_direction, func -> param_cnt, -step);
+	kernel_sync_param_from_host_to_device(func -> gpu_param_ptr, func -> gpu_param, func -> param_cnt);
 #else
 	for (int i = 0; i < direction.size(); i++) {
 		direction[i] = -step * direction[i];

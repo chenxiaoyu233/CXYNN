@@ -1,4 +1,4 @@
-#include "CXYNeuronNetwork.h"
+/*#include "CXYNeuronNetwork.h"
 
 DenseLayer *input_layer;
 DenseLayer *output_layer;
@@ -89,7 +89,7 @@ int main() {
 	test();
 	return 0;
 }
-/*
+*/
 #include "CXYNeuronNetwork.h"
 typedef unsigned char byte;
 
@@ -286,4 +286,3 @@ int main() {
 	//test();
 	return 0;
 }
-*/
