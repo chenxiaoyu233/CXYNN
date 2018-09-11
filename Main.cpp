@@ -95,7 +95,11 @@ typedef unsigned char byte;
 
 DenseLayer *Input;
 ConvLayer *C1;
-DenseLayer *hide;
+ConvLayer *S1;
+ConvLayer *C2;
+ConvLayer *S2;
+DenseLayer *H1;
+DenseLayer *H2;
 DenseLayer *Output;
 
 Estimator_Softmax *estimator;
@@ -103,25 +107,31 @@ Estimator_Softmax *estimator;
 void build_network() {
 	Input = new DenseLayer(28, 28); //
 	C1 = new ConvLayer(6, 28, 28, 5, 5, 1, 1, 2, 2);
-	hide = new DenseLayer(1, 100);
+	S1 = new ConvLayer(6, 14, 14, 2, 2, 2, 2, 0, 0);
+	C2 = new ConvLayer(16, 10, 10, 5, 5, 1, 1, 0, 0);
+	S2 = new ConvLayer(16, 5, 5, 2, 2, 2, 2, 0, 0);
+	H1 = new DenseLayer(1, 120);
+	H2 = new DenseLayer(1, 84);
 	Output = new DenseLayer(1, 10);
 
 	estimator = new Estimator_Softmax(Output);
-#ifdef ENABLE_CUDA	
+
 	Input -> SetActionFunc(kernel_Linear, kernel_LinearDel);
-	C1 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
-	hide -> SetActionFunc(kernel_tanh, kernel_tanhDel);
+	C1 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
+	S1 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+	C2 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
+	S2 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+	H1 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
+	H2 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
 	Output -> SetActionFunc(kernel_Linear, kernel_LinearDel);
-#else
-	Input -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
- 	C1 -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-	hide -> SetActionFunc(&(ActiveFunction::tanh), &(ActiveFunction::tanhDel));
-	Output -> SetActionFunc(&(ActiveFunction::Linear), &(ActiveFunction::LinearDel));
-#endif
 
 	C1 -> InputLayer(Input);
-	hide -> InputLayer(C1);
-	Output -> InputLayer(hide);
+	S1 -> InputLayer(C1);
+	C2 -> InputLayer(S1);
+	S2 -> InputLayer(C2);
+	H1 -> InputLayer(S2);
+	H2 -> InputLayer(H1);
+	Output -> InputLayer(H2);
 }
 
 vector<Matrix<double>*> trainData;
@@ -208,15 +218,15 @@ void read_test_label() {
 
 void train() {
 	puts("initialize functionAbstractor");
-	FuncAbstractor funcAbstractor(Input, Output, estimator, 0.1);
+	FuncAbstractor funcAbstractor(Input, Output, estimator, 0.001);
 	puts("complete");
 
 
 	puts("initialize optimizer");
 	Optimizer optimizer(
 		&funcAbstractor,
-		0.05f,
-		2000,
+		0.005f,
+		10000,
 		trainData,
 		trainLabel,
 		"mnist/train_backup",
@@ -227,8 +237,8 @@ void train() {
 	puts("complete");
 
 	optimizer.SetSaveStep(5);
-	//optimizer.TrainFromFile();
-	optimizer.TrainFromNothing();
+	optimizer.TrainFromFile();
+	//optimizer.TrainFromNothing();
 	
 	optimizer.Save(); //最后保存一下
 
@@ -266,7 +276,7 @@ void test() {
 		//FOR(j, 1, 10) if ((*(testLabel[i]))(1, j) > 0.5) ans = j;
 		//printf("%d : %d\n", ans-1, predictor.Classify(testData[i]));
 		if (ans-1 == predictor.Classify(testData[i])) correct += 1;
-		printf("%d/%d %d/%d\n", correct, i+1, i+1, testData.size());
+		if(i % 100 == 0) printf("%d/%d %d/%d\n", correct, i+1, i+1, testData.size());
 	}
 	printf("%d/%d\n", correct, testData.size());
 
@@ -282,7 +292,7 @@ int main() {
 	read_test_data();
 	read_test_label();
 
-	train();
-	//test();
+	//train();
+	test();
 	return 0;
 }

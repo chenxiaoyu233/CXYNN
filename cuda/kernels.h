@@ -27,6 +27,9 @@ double kernel_vector_dot(double *vec_a, double *vec_b, int len);
 void kernel_vector_add_to_with_factor(double *gpu_param, double *gpu_paramDel, int len, double factor);
 void kernel_vector_add_to(double *dst, double *src, int len);
 void kernel_vector_mutiply(double *vec, double factor, int len);
+void kernel_vector_double_ptr_set_value(double **dp, double value, int st, int ed);
+void kernel_setup_rand_kernel(int len);
+void kernel_vector_double_ptr_rand_zero_one(double **dp, double rate, int st, int ed);
 
 typedef double (*ACTFUNC) (double);
 
@@ -48,6 +51,7 @@ extern ACTFUNC kernel_LinearDel;
 void active_function_register();
 
 void cuda_init(); // cuda初始化
+void cuda_uninit(); // cuda反初始化
 
 // tools for debug
 #include <cstdio>

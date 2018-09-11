@@ -4,6 +4,7 @@
 #include "Common.h"
 #include "Matrix.h"
 #include "FuncAbstractor.h"
+#include "DropoutLayer.h"
 
 
 class Optimizer {
@@ -23,6 +24,7 @@ class Optimizer {
 	FuncAbstractor *func;
 	vector<Matrix<double>*> trainData;
 	vector<Matrix<double>*> trainLabel;
+	vector<DropoutLayer*> dropout; // 所有的dropout层
 
 #ifdef ENABLE_CUDA
 	double *gpu_direction;
@@ -34,6 +36,7 @@ class Optimizer {
 	void LoadFromFile();
 	virtual void Log();
 	virtual void MainTrainMethod(int batchSize);
+	void resetDropoutLayer(); // 每个epoch 专门用来设定dropout layer
 
 	public:
 	Optimizer(FuncAbstractor* func, 
@@ -58,6 +61,7 @@ class Optimizer {
 	void UnitlizeVector(vector<double> &data); //单位化向量
 #endif
 	void NormalizeData(Matrix<double>* data);
+	void AddDropoutLayer(DropoutLayer *drop);
 };
 
 #endif

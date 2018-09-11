@@ -1,4 +1,7 @@
 #include "kernels.h"
+// curand库
+#include <curand.h>
+#include <curand_kernel.h>
 
 int dev = 0;
 cudaDeviceProp devProp;
@@ -273,6 +276,54 @@ void kernel_vector_mutiply(double *vec, double factor, int len) {
 	//CHECK( cudaDeviceSynchronize() );
 }
 
+__global__ void __vector_double_ptr_set_value__ (double **dp, double value, int st, int ed) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x + st;
+	if(idx >= ed) return;
+	*(dp[idx]) = value;
+}
+
+void kernel_vector_double_ptr_set_value(double **dp, double value, int st, int ed) {
+	__vector_double_ptr_set_value__<<<grid_size(ed-st), block_size()>>>(dp, value, st, ed);
+	CHECK_KERNEL();
+	//CHECK( cudaDeviceSynchronize() );
+}
+
+curandState_t* rand_kernel = NULL;
+int rand_kernel_count = 0;
+
+__global__ void __setup_rand_kernel__ (curandState_t *rand_kernel, int len) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	if(idx >= len) return;
+	curand_init (2333, idx, 0, rand_kernel);
+}
+
+void kernel_setup_rand_kernel(int len) {
+	if(rand_kernel_count < len) {
+		if(rand_kernel != NULL) CHECK( cudaFree(rand_kernel) );
+		CHECK( cudaMalloc(&rand_kernel, sizeof(curandState_t) * len) );
+		rand_kernel_count = len;
+		__setup_rand_kernel__ <<<grid_size(len), block_size()>>>(rand_kernel, len);
+		CHECK_KERNEL();
+		//CHECK( cudaDeviceSynchronize() );
+	}
+}
+
+__global__ void __vector_double_ptr_rand_zero_one__ (double **dp, double rate, curandState_t *state, int st, int ed) {
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	int idx_s = idx + st;
+	if(idx_s >= ed) return;
+	double tmp = curand_uniform(state + idx);
+	if(tmp <= rate) *(dp[idx_s]) = 1;
+	else *(dp[idx_s]) = 0;
+}
+
+void kernel_vector_double_ptr_rand_zero_one(double **dp, double rate, int st, int ed) {
+	kernel_setup_rand_kernel(ed-st);
+	__vector_double_ptr_rand_zero_one__<<<grid_size(ed-st), block_size()>>>(dp, rate, rand_kernel, st, ed);
+	CHECK_KERNEL();
+	//CHECK( cudaDeviceSynchronize() );
+}
+
 __device__ double __Sigmoid__ (double x) {
 	return 1.0f/(1.0f + exp(-x));
 }
@@ -360,6 +411,12 @@ void active_function_register() {
 void cuda_init() {
 	kernel_init_info();
 	active_function_register();
+}
+
+void cuda_uninit() {
+	if(vector_gpu_temp_memory != NULL) CHECK( cudaFree(vector_gpu_temp_memory) );
+	if(vector_cpu_temp_memory != NULL) delete[] vector_gpu_temp_memory;
+	if(rand_kernel != NULL) CHECK( cudaFree(rand_kernel) );
 }
 
 __global__ void __debug_print_int__ (int *x) {

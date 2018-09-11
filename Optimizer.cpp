@@ -34,6 +34,7 @@ Optimizer::Optimizer(
 	direction.clear();
 	direction.resize((func->param).size(), 0);
 #endif
+	dropout.clear();
 }
 
 void Optimizer::NormalizeData(Matrix<double>* data) {
@@ -135,11 +136,19 @@ void Optimizer::UnitlizeVector(vector<double> &data) {
 }
 #endif
 
+void Optimizer::resetDropoutLayer() {
+	for(int i = 0; i < dropout.size(); i++) {
+		dropout[i] -> SetEdgeVal();
+	}
+}
+
 void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过程 (SGD)
 	vector<int> seqence;
 	seqence.resize(trainData.size(), 0);
 	for (int i = 0; i < trainData.size(); i++) seqence[i] = i;
 	random_shuffle(seqence.begin(), seqence.end());
+
+	resetDropoutLayer();
 
 	meanLoss = 0;
 #ifdef ENABLE_CUDA
@@ -180,3 +189,6 @@ void Optimizer::MainTrainMethod(int batchSize) { // 一次迭代中的计算过�
 #endif
 }
 
+void Optimizer::AddDropoutLayer(DropoutLayer *drop) {
+	dropout.push_back(drop);
+}

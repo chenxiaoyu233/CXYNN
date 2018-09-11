@@ -49,7 +49,7 @@ class Layer: public Matrix<Neuron> {
 	void UpdateForwardBegin(Matrix<double> *other);
 
 	//这个函数用于收集所有的参数
-	void CollectParam(vector<double*> *param, vector<double*> *paramDel);
+	virtual void CollectParam(vector<double*> *param, vector<double*> *paramDel);
 
 #ifdef ENABLE_CUDA
 	void RebuildOnGPU(); // 在GPU上重构整个网络(主要用于重建Fiber连接)
