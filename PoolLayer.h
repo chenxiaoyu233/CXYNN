@@ -10,8 +10,13 @@ class PoolLayer: public ConvLayer {
 	virtual void insertConv(Neuron *a, Neuron *b, int c, int mx, int my);
 	virtual void allocateParamMem(int InChannel);
 	virtual void freeCoreParamMem();
+#ifdef ENABLE_CUDA
+	double *fkWab, *fkdWab;
+	double *fkb, *fkbDel;
+#else
 	double fkWab, fkdWab; //虚假的边权, 不需要被更新 (fake => fk)
 	double fkb, fkbDel; // 虚假的偏置, 和偏置的偏导数
+#endif
 
 	public:
 	PoolLayer(
@@ -21,6 +26,7 @@ class PoolLayer: public ConvLayer {
 		int stepRow = 2, int stepCol = 2,
 		int padRow = 0, int padCol = 0
 	);
+	~PoolLayer();
 };
 
 #endif

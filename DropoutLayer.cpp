@@ -3,7 +3,6 @@
 
 DropoutLayer::DropoutLayer(int channel, int row, int col, double dropout_prob, bool isTrain)
 :Layer(channel, row, col), prob(prob), isTrain(isTrain) { 
-	setBToZero(); 
 #ifdef ENABLE_CUDA
 	gpu_param_cnt = 2 * channel * row * col;
 	CHECK( cudaMalloc(&gpu_param_ptr, sizeof(double) * gpu_param_cnt) );
@@ -32,6 +31,8 @@ void DropoutLayer::connectLayer(Layer *Input) {
 	for(int i = 0; i < gpu_param_cnt; i++) cpu_param_ptr[i] = paramPool[i];
 	CHECK( cudaMemcpy(gpu_param_ptr, cpu_param_ptr, sizeof(double) * gpu_param_cnt, cudaMemcpyHostToDevice) );
 	delete[] cpu_param_ptr;
+	// 将所有的b相关的参数都置为0
+	setBToZero(); 
 #endif
 }
 

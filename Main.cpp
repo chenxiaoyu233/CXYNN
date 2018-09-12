@@ -95,23 +95,23 @@ typedef unsigned char byte;
 
 DenseLayer *Input;
 ConvLayer *C1;
-ConvLayer *S1;
+MaxPoolLayer *S1;
 ConvLayer *C2;
-ConvLayer *S2;
+MaxPoolLayer *S2;
 DenseLayer *H1;
-DenseLayer *H2;
+DropoutLayer *Dp1;
 DenseLayer *Output;
 
 Estimator_Softmax *estimator;
 
 void build_network() {
 	Input = new DenseLayer(28, 28); //
-	C1 = new ConvLayer(6, 28, 28, 5, 5, 1, 1, 2, 2);
-	S1 = new ConvLayer(6, 14, 14, 2, 2, 2, 2, 0, 0);
-	C2 = new ConvLayer(16, 10, 10, 5, 5, 1, 1, 0, 0);
-	S2 = new ConvLayer(16, 5, 5, 2, 2, 2, 2, 0, 0);
-	H1 = new DenseLayer(1, 120);
-	H2 = new DenseLayer(1, 84);
+	C1 = new ConvLayer(32, 28, 28, 5, 5, 1, 1, 2, 2);
+	S1 = new MaxPoolLayer(32, 14, 14, 2, 2, 2, 2, 0, 0);
+	C2 = new ConvLayer(64, 14, 14, 5, 5, 1, 1, 2, 2);
+	S2 = new MaxPoolLayer(64, 7, 7, 2, 2, 2, 2, 0, 0);
+	H1 = new DenseLayer(1, 1024);
+	Dp1 = new DropoutLayer(1, 1, 1024, 0.4, 1);
 	Output = new DenseLayer(1, 10);
 
 	estimator = new Estimator_Softmax(Output);
@@ -122,7 +122,7 @@ void build_network() {
 	C2 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
 	S2 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 	H1 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
-	H2 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
+	Dp1 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 	Output -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 
 	C1 -> InputLayer(Input);
@@ -130,8 +130,8 @@ void build_network() {
 	C2 -> InputLayer(S1);
 	S2 -> InputLayer(C2);
 	H1 -> InputLayer(S2);
-	H2 -> InputLayer(H1);
-	Output -> InputLayer(H2);
+	Dp1 -> InputLayer(H1);
+	Output -> InputLayer(Dp1);
 }
 
 vector<Matrix<double>*> trainData;
@@ -218,14 +218,14 @@ void read_test_label() {
 
 void train() {
 	puts("initialize functionAbstractor");
-	FuncAbstractor funcAbstractor(Input, Output, estimator, 0.001);
+	FuncAbstractor funcAbstractor(Input, Output, estimator, 0.1);
 	puts("complete");
 
 
 	puts("initialize optimizer");
 	Optimizer optimizer(
 		&funcAbstractor,
-		0.005f,
+		0.1f,
 		10000,
 		trainData,
 		trainLabel,
@@ -237,8 +237,8 @@ void train() {
 	puts("complete");
 
 	optimizer.SetSaveStep(5);
-	optimizer.TrainFromFile();
-	//optimizer.TrainFromNothing();
+	//optimizer.TrainFromFile();
+	optimizer.TrainFromNothing();
 	
 	optimizer.Save(); //最后保存一下
 
@@ -292,7 +292,7 @@ int main() {
 	read_test_data();
 	read_test_label();
 
-	//train();
-	test();
+	train();
+	//test();
 	return 0;
 }
