@@ -50,6 +50,8 @@ class Tool {
 	double RandDouble(double a, double b, double eps);
 };
 
+extern Tool Tools;
+
 // 如果启用cuda的话， 这些函数需要在device上重新实现
 #ifndef ENABLE_CUDA
 //激活函数集合

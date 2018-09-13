@@ -17,7 +17,7 @@ class DropoutLayer: public Layer {
 	void setBToZero();
 
 	public:
-	DropoutLayer(int channel, int row, int col, double dropout_prob, bool isTrain);
+	DropoutLayer(int channel, int row, int col, double prob, bool isTrain);
 	~DropoutLayer();
 
 	// 重载这个函数， 保证这一层的参数不会被收集上去

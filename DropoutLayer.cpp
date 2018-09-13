@@ -1,7 +1,7 @@
 #include "DropoutLayer.h"
 #include "cuda/kernels.h"
 
-DropoutLayer::DropoutLayer(int channel, int row, int col, double dropout_prob, bool isTrain)
+DropoutLayer::DropoutLayer(int channel, int row, int col, double prob, bool isTrain)
 :Layer(channel, row, col), prob(prob), isTrain(isTrain) { 
 #ifdef ENABLE_CUDA
 	gpu_param_cnt = 2 * channel * row * col;
@@ -41,7 +41,7 @@ void DropoutLayer::setBToZero() {
 #ifdef ENABLE_CUDA
 	kernel_vector_double_ptr_set_value(gpu_param_ptr, 0, 0, end);
 #else
-	for(int i = 0; i < end; i++) *(paramPool[i].b) = 0;
+	for(int i = 0; i < end; i++) *(paramPool[i]) = 0;
 #endif
 }
 

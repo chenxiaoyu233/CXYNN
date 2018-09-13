@@ -4,6 +4,8 @@
 #include "Common.h"
 #include "Layer.h"
 
+extern Tool Tools;
+
 class DenseLayer: public Layer {
 	protected:
 	virtual void connectLayer(Layer* Input);

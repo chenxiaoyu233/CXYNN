@@ -18,7 +18,7 @@ void kernel_init_info() {
 	CHECK( cudaGetDeviceProperties(&devProp, dev) );
 }
 
-#define MAX_BLOCK_SIZE 1024
+#define MAX_BLOCK_SIZE 512
 
 int block_size(){
 	return min(MAX_BLOCK_SIZE, devProp.maxThreadsPerBlock);
@@ -294,7 +294,7 @@ int rand_kernel_count = 0;
 __global__ void __setup_rand_kernel__ (curandState_t *rand_kernel, int len) {
 	int idx = blockDim.x * blockIdx.x + threadIdx.x;
 	if(idx >= len) return;
-	curand_init (2333, idx, 0, rand_kernel);
+	curand_init (2333, idx, 0, rand_kernel + idx);
 }
 
 void kernel_setup_rand_kernel(int len) {

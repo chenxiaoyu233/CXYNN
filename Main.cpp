@@ -95,9 +95,9 @@ typedef unsigned char byte;
 
 DenseLayer *Input;
 ConvLayer *C1;
-MaxPoolLayer *S1;
+ConvLayer *S1;
 ConvLayer *C2;
-MaxPoolLayer *S2;
+ConvLayer *S2;
 DenseLayer *H1;
 DropoutLayer *Dp1;
 DenseLayer *Output;
@@ -107,15 +107,16 @@ Estimator_Softmax *estimator;
 void build_network() {
 	Input = new DenseLayer(28, 28); //
 	C1 = new ConvLayer(32, 28, 28, 5, 5, 1, 1, 2, 2);
-	S1 = new MaxPoolLayer(32, 14, 14, 2, 2, 2, 2, 0, 0);
-	C2 = new ConvLayer(64, 14, 14, 5, 5, 1, 1, 2, 2);
-	S2 = new MaxPoolLayer(64, 7, 7, 2, 2, 2, 2, 0, 0);
-	H1 = new DenseLayer(1, 1024);
-	Dp1 = new DropoutLayer(1, 1, 1024, 0.4, 1);
+	S1 = new ConvLayer(32, 14, 14, 2, 2, 2, 2, 0, 0);
+	C2 = new ConvLayer(16, 14, 14, 5, 5, 1, 1, 2, 2);
+	S2 = new ConvLayer(16, 7, 7, 2, 2, 2, 2, 0, 0);
+	H1 = new DenseLayer(1, 128);
+	Dp1 = new DropoutLayer(1, 1, 128, 0.4, 1);
 	Output = new DenseLayer(1, 10);
 
 	estimator = new Estimator_Softmax(Output);
 
+#ifdef ENABLE_CUDA
 	Input -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 	C1 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
 	S1 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
@@ -124,6 +125,16 @@ void build_network() {
 	H1 -> SetActionFunc(kernel_tanh, kernel_tanhDel);
 	Dp1 -> SetActionFunc(kernel_Linear, kernel_LinearDel);
 	Output -> SetActionFunc(kernel_Linear, kernel_LinearDel);
+#else
+	Input -> SetActionFunc(&ActiveFunction::Linear, &ActiveFunction::LinearDel);
+	C1 -> SetActionFunc(&ActiveFunction::tanh, &ActiveFunction::tanhDel);
+	S1 -> SetActionFunc(&ActiveFunction::Linear, &ActiveFunction::LinearDel);
+	C2 -> SetActionFunc(&ActiveFunction::tanh, &ActiveFunction::tanhDel);
+	S2 -> SetActionFunc(&ActiveFunction::Linear, &ActiveFunction::LinearDel);
+	H1 -> SetActionFunc(&ActiveFunction::tanh, &ActiveFunction::tanhDel);
+	Dp1 -> SetActionFunc(&ActiveFunction::Linear, &ActiveFunction::LinearDel);
+	Output -> SetActionFunc(&ActiveFunction::Linear, &ActiveFunction::LinearDel);
+#endif
 
 	C1 -> InputLayer(Input);
 	S1 -> InputLayer(C1);
@@ -225,20 +236,23 @@ void train() {
 	puts("initialize optimizer");
 	Optimizer optimizer(
 		&funcAbstractor,
-		0.1f,
+		0.10f,
 		10000,
 		trainData,
 		trainLabel,
 		"mnist/train_backup",
 		2333,
 		-0.10, 0.10, 0.0001,
-		200
+		100
 	);
 	puts("complete");
 
+	// add the dropout layer to the list
+	optimizer.AddDropoutLayer(Dp1);
+
 	optimizer.SetSaveStep(5);
-	//optimizer.TrainFromFile();
-	optimizer.TrainFromNothing();
+	optimizer.TrainFromFile();
+	//optimizer.TrainFromNothing();
 	
 	optimizer.Save(); //最后保存一下
 
