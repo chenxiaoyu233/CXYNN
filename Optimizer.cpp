@@ -83,9 +83,9 @@ void Optimizer::LoadFromFile() {
 
 void Optimizer::Log() {
 	printf("epoch: %d/%d, loss: %lf\n", epoch, maxEpoch, meanLoss);
-	FOR(i, 1, 1) {
-		//printf("%.3f ", (*(func -> Output))(1, i).forwardBuffer[1]);
-	} //puts("");
+	FOR(i, 1, 10) {
+		printf("%.3f ", (*(func -> Output))(1, i).forwardBuffer[1]);
+	} puts("");
 }
 
 void Optimizer::TrainFromNothing() {

@@ -111,7 +111,7 @@ void build_network() {
 	C2 = new ConvLayer(16, 14, 14, 5, 5, 1, 1, 2, 2);
 	S2 = new ConvLayer(16, 7, 7, 2, 2, 2, 2, 0, 0);
 	H1 = new DenseLayer(1, 128);
-	Dp1 = new DropoutLayer(1, 1, 128, 0.4, 1);
+	Dp1 = new DropoutLayer(1, 1, 128, 0.4, 0);
 	Output = new DenseLayer(1, 10);
 
 	estimator = new Estimator_Softmax(Output);
@@ -236,7 +236,7 @@ void train() {
 	puts("initialize optimizer");
 	Optimizer optimizer(
 		&funcAbstractor,
-		0.10f,
+		0.05f,
 		10000,
 		trainData,
 		trainLabel,
@@ -276,6 +276,9 @@ void test() {
 		200
 	);
 
+	// add the dropout layer to the list
+	predictor.AddDropoutLayer(Dp1);
+
 	Matrix<double> *mat;
 	FOR(i, 0, 9) {
 		mat = new Matrix<double>(1, 1);
@@ -306,7 +309,7 @@ int main() {
 	read_test_data();
 	read_test_label();
 
-	train();
-	//test();
+	//train();
+	test();
 	return 0;
 }

@@ -20,6 +20,9 @@ Predictor::Predictor(
 int Predictor::Classify(Matrix<double>* Input) {
 	int whe = 0;
 	double minLoss = 1e10; //标兵, 极限数据可能会出问题
+
+	resetDropoutLayer();
+
 	for (int i = 0; i < expectPair.size(); i++) {
 		func -> Update(Input, expectPair[i].second);
 		double curLoss = func -> GetLoss();
