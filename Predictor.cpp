@@ -23,9 +23,11 @@ int Predictor::Classify(Matrix<double>* Input) {
 
 	resetDropoutLayer();
 
+	func -> Update(Input, expectPair[0].second);
+
 	for (int i = 0; i < expectPair.size(); i++) {
-		func -> Update(Input, expectPair[i].second);
-		double curLoss = func -> GetLoss();
+		//func -> Update(Input, expectPair[i].second);
+		double curLoss = func -> estimator -> Loss(expectPair[i].second);
 		if (curLoss < minLoss) {
 			whe = i; minLoss = curLoss;
 		}

@@ -10,7 +10,6 @@ extern Tool Tools;
 
 class FuncAbstractor {
 	private:
-	Estimator* estimator; // 用于最终将网络封装成函数和求一部分参数的偏导数
 	double loss; // loss其实就是真个函数真正的输出`
 	void ClearParamDel();
 
@@ -18,6 +17,7 @@ class FuncAbstractor {
 	void L2regularization();
 
 	public:
+	Estimator* estimator; // 用于最终将网络封装成函数和求一部分参数的偏导数
 	Layer *Input, *Output; //暂时公有
 	vector<double*> param;
 	vector<double*> paramDel;
