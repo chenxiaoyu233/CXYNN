@@ -28,6 +28,7 @@ void Layer::layerInit() {
 	// 添加idx, 便于在显存中重构网络.
 	int count = channel * row * col - 1;
 	FOR(i, 0, count) field[i].idx = i;
+	gpu_buffer = NULL;
 #endif
 }
 
@@ -51,6 +52,9 @@ Layer::~Layer() {
 		delete paramDeltaPool[i];
 #endif
 	}
+#ifdef ENABLE_CUDA
+	CHECK( cudaFree(gpu_buffer) );
+#endif
 }
 
 void Layer::Insert(Neuron *a, Neuron *b) { // a -> b
@@ -107,11 +111,9 @@ void Layer::UpdateForwardBegin(Matrix<double> *other) {
 	assert(col == (other->size()).second);
 	assert(channel == other->Channel());
 #ifdef ENABLE_CUDA
-	double *gpu_buffer;
-	CHECK( cudaMalloc(&gpu_buffer, sizeof(double) * channel * row * col) );
+	if (gpu_buffer == NULL) CHECK( cudaMalloc(&gpu_buffer, sizeof(double) * channel * row * col) );
 	CHECK( cudaMemcpy(gpu_buffer, other -> field, sizeof(double) * channel * row * col, cudaMemcpyHostToDevice) );
 	kernel_layer_set_value(gpu_field, gpu_buffer, channel * row * col);
-	CHECK( cudaFree(gpu_buffer) );
 #else
 	FOR(c, 1, channel) { this -> SetAt(c);
 		FOR(x, 1, row) FOR(y, 1, col) {

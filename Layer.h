@@ -25,6 +25,7 @@ class Layer: public Matrix<Neuron> {
 #ifdef ENABLE_CUDA
 	void syncFiber(); // 在GPU上重构当前layer
 	void rebuildFiberOnGpu(); // 在GPU上重建fiber
+	double *gpu_buffer; // 用于输入的gpu buffer
 #endif
 
 	public: 
