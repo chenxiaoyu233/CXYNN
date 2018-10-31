@@ -54,3 +54,7 @@ double ActiveFunction::LinearDel(double x) {
 	return 1.0f;
 }
 #endif
+
+#ifdef ENABLE_MEM_CONTROL
+MemoryControl memoryController(MemoryControl::__160M__);
+#endif

@@ -1,7 +1,22 @@
 #ifndef __MEMORY_CONTROL_H__
 #define __MEMORY_CONTROL_H__
 
-#include "Common.h"
+#include <vector>
+#include <cstdint>
+#include <cuda_runtime.h>
+#include <cstdio>
+#include <cstdlib>
+using namespace std;
+
+#define CHECK(x) \
+do {\
+	cudaError_t err = (x);\
+	if (err != cudaSuccess) {\
+		 fprintf(stderr, "API error %s:%d Returned:%s\n", __FILE__, __LINE__, cudaGetErrorString(err));\
+		 exit(1);\
+	}\
+} while(0)
+
 
 // 好像使用cudaMalloc的次数不能很多, 不然会报错
 // 所以实现了这个类型, 手动管理内存分配, 希望能消掉这个错误

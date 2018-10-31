@@ -5,22 +5,22 @@
 #undef cudaFree
 
 // 常用常量
-const static size_t MemoryControl::__20M__ = (size_t)20 * 1024 * 1024;
-const static size_t MemoryControl::__40M__ = (size_t)40 * 1024 * 1024;
-const static size_t MemoryControl::__80M__ = (size_t)80 * 1024 * 1024;
-const static size_t MemoryControl::__160M__ = (size_t)160 * 1024 * 1024;
-const static size_t MemoryControl::__320M__ = (size_t)320 * 1024 * 1024;
-const static size_t MemoryControl::__640M__ = (size_t)640 * 1024 * 1024;
-const static size_t MemoryControl::__1280M__ = (size_t)1280 * 1024 * 1024;
+const size_t MemoryControl::__20M__ = (size_t)20 * 1024 * 1024;
+const size_t MemoryControl::__40M__ = (size_t)40 * 1024 * 1024;
+const size_t MemoryControl::__80M__ = (size_t)80 * 1024 * 1024;
+const size_t MemoryControl::__160M__ = (size_t)160 * 1024 * 1024;
+const size_t MemoryControl::__320M__ = (size_t)320 * 1024 * 1024;
+const size_t MemoryControl::__640M__ = (size_t)640 * 1024 * 1024;
+const size_t MemoryControl::__1280M__ = (size_t)1280 * 1024 * 1024;
 
-MemoryControl::MemoryControl(size_t block_size):block_size(block_size) { ptr = NULL; }
+MemoryControl::MemoryControl(size_t block_size):block_size(block_size) { }
 MemoryControl::~MemoryControl() {
 	for (auto bf: buffer) {
 		CHECK( cudaFree(bf.first) );
 	}
 }
 
-cudaError_t deviceMalloc(void **devPtr, size_t size) {
+cudaError_t MemoryControl::deviceMalloc(void **devPtr, size_t size) {
 	// 申请的空间大于了block的大小
 	if (size > block_size) { 
 		CHECK( cudaMalloc(devPtr, size) );
@@ -41,10 +41,10 @@ cudaError_t deviceMalloc(void **devPtr, size_t size) {
 	CHECK( cudaMalloc(devPtr, block_size) );
 	buffer.push_back(make_pair(*devPtr, *devPtr + size));
 
-	return cudaSuccess
+	return cudaSuccess;
 }
 
-cudaError_t deviceFree(void *devPtr) {
+cudaError_t MemoryControl::deviceFree(void *devPtr) {
 	// do nothing
 	return cudaSuccess;
 }

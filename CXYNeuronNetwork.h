@@ -4,6 +4,7 @@
 using namespace std;
 
 #include "Common.h"
+#include "MemoryControl.h"
 #include "Fiber.h"
 #include "Neuron.h"
 #include "Layer.h"

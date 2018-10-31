@@ -32,6 +32,8 @@ else (NDEBUG)
 	set(CMAKE_CXX_FLAGS "-ggdb ${CMAKE_CXX_FLAGS}")
 endif (NDEBUG)
 
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+
 # 编译目标
 add_executable (CXYNeuronNetwork ${source_list})
 
