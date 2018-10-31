@@ -6,3 +6,4 @@
 3. cuda: launch out of resources error (0x7), sometimes happened depend on the structure of the code which is
    handled by the compiler. For example, if your code request too many registers in a time, this error will 
    raise, even if you do not require many resources.
+4. cuda: cudaMalloc, cudaFree的次数过多可能会导致报错

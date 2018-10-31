@@ -26,7 +26,7 @@ do {\
 } while(0)
 #endif
 
-
+#include <stack>
 #include <vector>
 #include <iostream>
 #include <cstdio>
@@ -71,6 +71,16 @@ namespace ActiveFunction{
 	double Linear(double x);
 	double LinearDel(double x);
 };
+#endif
+
+#ifdef ENABLE_MEM_CONTROL
+//启动手动显存控制
+#include "MemoryControl.h"
+MemoryControl memoryController;
+
+// 将cuda对显存的控制替换掉
+#define cudaMalloc(a, b) memoryController.deviceMalloc(a, b)
+#define cudaFree(a) memoryController.deviceFree(a)
 #endif
 
 #endif
