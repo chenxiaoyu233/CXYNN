@@ -76,7 +76,7 @@ namespace ActiveFunction{
 #ifdef ENABLE_MEM_CONTROL
 //启动手动显存控制
 #include "MemoryControl.h"
-MemoryControl memoryController;
+MemoryControl memoryController(MemoryControl.__160M__);
 
 // 将cuda对显存的控制替换掉
 #define cudaMalloc(a, b) memoryController.deviceMalloc(a, b)

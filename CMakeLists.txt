@@ -10,6 +10,7 @@ include_directories("${CUDA_INCLUDE_DIRS}")
 
 # 选项
 option (ENABLE_CUDA "enable the cuda" OFF)
+option (ENABLE_MEM_CONTROL "enable the hand-made-controller of devicd memory" OFF)
 option (NDEBUG "disable the assert" OFF)
 
 # cmake 控制的配置头文件
