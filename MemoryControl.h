@@ -42,6 +42,8 @@ class MemoryControl {
 	~MemoryControl();
 	cudaError_t deviceMalloc(void **devPtr, size_t size);
 	cudaError_t deviceFree(void *devPtr);
+	cudaError_t deviceMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind);
+	void Log(); // 方便在gdb中查看buffer中的值
 };
 
 #endif

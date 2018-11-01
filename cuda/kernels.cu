@@ -39,7 +39,7 @@ __global__ void __rebuild_input_fiber__ (Neuron *input_field, Neuron *gpu_field,
 void kernel_rebuild_input_fiber(Neuron *input_field, Neuron *gpu_field, int len) {
 	__rebuild_input_fiber__<<<grid_size(len), block_size()>>>(input_field, gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __rebuild_output_fiber__ (Neuron *output_field, Neuron *gpu_field, int len) {
@@ -53,7 +53,7 @@ __global__ void __rebuild_output_fiber__ (Neuron *output_field, Neuron *gpu_fiel
 void kernel_rebuild_output_fiber(Neuron *output_field, Neuron *gpu_field, int len) {
 	__rebuild_output_fiber__<<<grid_size(len), block_size()>>>(output_field, gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __update_forward__ (Neuron *gpu_field, int len) {
@@ -72,7 +72,7 @@ __global__ void __update_forward__ (Neuron *gpu_field, int len) {
 void kernel_update_forward(Neuron *gpu_field, int len) {
 	__update_forward__<<<grid_size(len), block_size()>>>(gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __spread_back__ (Neuron *gpu_field, int len) {
@@ -94,7 +94,7 @@ __global__ void __spread_back__ (Neuron *gpu_field, int len) {
 void kernel_spread_back(Neuron *gpu_field, int len) {
 	__spread_back__<<<grid_size(len), block_size()>>>(gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __sync_BackwardBuffer_to_bDel__ (Neuron *gpu_field, int len) {
@@ -106,7 +106,7 @@ __global__ void __sync_BackwardBuffer_to_bDel__ (Neuron *gpu_field, int len) {
 void kernel_sync_BackwardBuffer_to_bDel(Neuron *gpu_field, int len) {
 	__sync_BackwardBuffer_to_bDel__<<<grid_size(len), block_size()>>>(gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __sync_param_from_host_to_device__ (double **param_ptr, double *param, int cnt) {
@@ -118,7 +118,7 @@ __global__ void __sync_param_from_host_to_device__ (double **param_ptr, double *
 void kernel_sync_param_from_host_to_device(double **param_ptr, double *param, int cnt) {
 	__sync_param_from_host_to_device__<<<grid_size(cnt), block_size()>>>(param_ptr, param, cnt);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __sync_param_from_device_to_host__ (double **param_ptr, double *param, int cnt) {
@@ -130,7 +130,7 @@ __global__ void __sync_param_from_device_to_host__ (double **param_ptr, double *
 void kernel_sync_param_from_device_to_host(double **param_ptr, double *param, int cnt) {
 	__sync_param_from_device_to_host__<<<grid_size(cnt), block_size()>>>(param_ptr, param, cnt);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __layer_set_value__ (Neuron *gpu_field, double *buffer, int len) {
@@ -144,7 +144,7 @@ __global__ void __layer_set_value__ (Neuron *gpu_field, double *buffer, int len)
 void kernel_layer_set_value(Neuron *gpu_field, double *buffer, int len) {
 	__layer_set_value__<<<grid_size(len), block_size()>>>(gpu_field, buffer, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __maxpool_push_spread_back__ (Neuron *gpu_field, int len) {
@@ -160,7 +160,7 @@ __global__ void __maxpool_push_spread_back__ (Neuron *gpu_field, int len) {
 void kernel_maxpool_push_spread_back(Neuron *gpu_field, int len) {
 	__maxpool_push_spread_back__<<<grid_size(len), block_size()>>>(gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __maxpool_update_forward__ (Neuron *gpu_field, int len) {
@@ -178,7 +178,7 @@ __global__ void __maxpool_update_forward__ (Neuron *gpu_field, int len) {
 void kernel_maxpool_update_forward(Neuron *gpu_field, int len) {
 	__maxpool_update_forward__<<<grid_size(len), block_size()>>>(gpu_field, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 // 全局自适应显存(用于向量操作，不会释放)
@@ -205,7 +205,7 @@ __global__ void __vector_set_zero__ (double *vec, int len) {
 void kernel_vector_set_zero(double *vec, int len) {
 	__vector_set_zero__<<<grid_size(len), block_size()>>>(vec, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __vector_block_dot__ (double *vec_a, double *vec_b, double *vec_ret, int len) {
@@ -231,7 +231,7 @@ double kernel_vector_dot(double *vec_a, double *vec_b, int len) { // need test a
 	kernel_check_vector_operation_memory(grid_size(len));
 	__vector_block_dot__<<<grid_size(len), block_size()>>>(vec_a, vec_b, vector_gpu_temp_memory, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 	CHECK( cudaMemcpy(vector_cpu_temp_memory, vector_gpu_temp_memory, grid_size(len) * sizeof(double), cudaMemcpyDeviceToHost) );
 	double ret = 0;
 	int __grid_size__ = grid_size(len);
@@ -249,7 +249,7 @@ __global__ void __vector_add_to_with_factor__ (double *dst, double *src, int len
 void kernel_vector_add_to_with_factor(double *dst, double *src, int len, double factor) {
 	__vector_add_to_with_factor__<<<grid_size(len), block_size()>>>(dst, src, len, factor);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __vector_add_to__ (double *dst, double *src, int len) {
@@ -261,7 +261,7 @@ __global__ void __vector_add_to__ (double *dst, double *src, int len) {
 void kernel_vector_add_to(double *dst, double *src, int len) {
 	__vector_add_to__<<<grid_size(len), block_size()>>>(dst, src, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __vector_mutiply__ (double *vec, double factor, int len) {
@@ -273,7 +273,7 @@ __global__ void __vector_mutiply__ (double *vec, double factor, int len) {
 void kernel_vector_mutiply(double *vec, double factor, int len) {
 	__vector_mutiply__<<<grid_size(len), block_size()>>>(vec, factor, len);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __global__ void __vector_double_ptr_set_value__ (double **dp, double value, int st, int ed) {
@@ -285,7 +285,7 @@ __global__ void __vector_double_ptr_set_value__ (double **dp, double value, int 
 void kernel_vector_double_ptr_set_value(double **dp, double value, int st, int ed) {
 	__vector_double_ptr_set_value__<<<grid_size(ed-st), block_size()>>>(dp, value, st, ed);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 curandState_t* rand_kernel = NULL;
@@ -304,7 +304,7 @@ void kernel_setup_rand_kernel(int len) {
 		rand_kernel_count = len;
 		__setup_rand_kernel__ <<<grid_size(len), block_size()>>>(rand_kernel, len);
 		CHECK_KERNEL();
-		//CHECK( cudaDeviceSynchronize() );
+		CHECK( cudaDeviceSynchronize() );
 	}
 }
 
@@ -321,7 +321,7 @@ void kernel_vector_double_ptr_rand_zero_one(double **dp, double rate, int st, in
 	kernel_setup_rand_kernel(ed-st);
 	__vector_double_ptr_rand_zero_one__<<<grid_size(ed-st), block_size()>>>(dp, rate, rand_kernel, st, ed);
 	CHECK_KERNEL();
-	//CHECK( cudaDeviceSynchronize() );
+	CHECK( cudaDeviceSynchronize() );
 }
 
 __device__ double __Sigmoid__ (double x) {

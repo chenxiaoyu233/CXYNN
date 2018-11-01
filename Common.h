@@ -81,6 +81,7 @@ extern MemoryControl memoryController;
 // 将cuda对显存的控制替换掉
 #define cudaMalloc(a, b) memoryController.deviceMalloc((void **)(a), (size_t)(b))
 #define cudaFree(a) memoryController.deviceFree((void *)(a))
+#define cudaMemcpy(a, b, c, d) memoryController.deviceMemcpy((void *)(a), (void *)(b), (size_t)(c), (cudaMemcpyKind)(d))
 #endif
 
 #endif

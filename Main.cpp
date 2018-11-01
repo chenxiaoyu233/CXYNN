@@ -105,11 +105,20 @@ DenseLayer *Output;
 Estimator_Softmax *estimator;
 
 void build_network() {
-	Input = new DenseLayer(28, 28); //
+	/*Input = new DenseLayer(28, 28); //
 	C1 = new ConvLayer(32, 28, 28, 5, 5, 1, 1, 2, 2);
 	S1 = new ConvLayer(32, 14, 14, 2, 2, 2, 2, 0, 0);
 	C2 = new ConvLayer(16, 14, 14, 5, 5, 1, 1, 2, 2);
 	S2 = new ConvLayer(16, 7, 7, 2, 2, 2, 2, 0, 0);
+	H1 = new DenseLayer(1, 128);
+	Dp1 = new DropoutLayer(1, 1, 128, 0.4, 0);
+	Output = new DenseLayer(1, 10);*/
+
+	Input = new DenseLayer(28, 28); //
+	C1 = new ConvLayer(32, 24, 24, 5, 5, 1, 1, 0, 0);
+	S1 = new ConvLayer(32, 12, 12, 2, 2, 2, 2, 0, 0);
+	C2 = new ConvLayer(16, 8, 8, 5, 5, 1, 1, 0, 0);
+	S2 = new ConvLayer(16, 4, 4, 2, 2, 2, 2, 0, 0);
 	H1 = new DenseLayer(1, 128);
 	Dp1 = new DropoutLayer(1, 1, 128, 0.4, 0);
 	Output = new DenseLayer(1, 10);
@@ -251,8 +260,8 @@ void train() {
 	optimizer.AddDropoutLayer(Dp1);
 
 	optimizer.SetSaveStep(5);
-	optimizer.TrainFromFile();
-	//optimizer.TrainFromNothing();
+	//optimizer.TrainFromFile();
+	optimizer.TrainFromNothing();
 	
 	optimizer.Save(); //最后保存一下
 
@@ -309,7 +318,8 @@ int main() {
 	read_test_data();
 	read_test_label();
 
-	//train();
-	test();
+	train();
+	//test();
 	return 0;
 }
+

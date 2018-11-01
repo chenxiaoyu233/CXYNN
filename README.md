@@ -7,3 +7,4 @@
    handled by the compiler. For example, if your code request too many registers in a time, this error will 
    raise, even if you do not require many resources.
 4. cuda: cudaMalloc, cudaFree的次数过多可能会导致报错
+5. 卷积层的padding实现有问题, 没有在显卡中重建出zeroSource这个神经元, 会导致访问无效内存
